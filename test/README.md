@@ -318,3 +318,5 @@ explain select 1;
 [REGEX].*PARTITION: UNPARTITIONED.*
 -- !result
 ```
+
+111
