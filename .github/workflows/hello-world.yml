@@ -1,0 +1,50 @@
+name: Test WorkFlow
+
+on:
+  pull_request:
+    branches:
+      - main
+      - pipeline
+
+jobs:
+#  specific_merge_requested:
+#    runs-on: ubuntu-latest
+#    if: ${{ github.event.pull_request.merged == true}}
+#    steps:
+#      - run: echo 'Merged job'
+
+  allocate_fe_ut_resource:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Allocate FE UT Resource
+        run: |
+          echo "Allocate FE UT Resource!"
+  run_fe_ut:
+    needs: allocate_fe_ut_resource
+    runs-on: ubuntu-latest
+    steps:
+      - name: RUN FE UT
+        run: |
+          echo "RUN FE UT!"
+  allocate_be_ut_resource:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Allocate BE UT Resource
+        run: |
+          echo "Allocate BE UT Resource!"
+  run_be_ut:
+    needs: allocate_be_ut_resource
+    runs-on: ubuntu-latest
+    steps:
+      - name: RUN BE UT
+        run: |
+          echo "RUN BE UT!"
+  build:
+    runs-on: ubuntu-latest
+      needs:
+        - run_fe_ut
+        - run_be_ut
+      steps:
+        - name: BUILD
+          run: |
+            echo "build!"
