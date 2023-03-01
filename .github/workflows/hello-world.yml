@@ -41,8 +41,8 @@ jobs:
           echo "RUN BE UT!"
   build:
     runs-on: ubuntu-latest
-      needs: [run_fe_ut, run_be_ut]
-      steps:
-        - name: BUILD
-          run: |
-            echo "build!"
+    needs: [run_fe_ut, run_be_ut]
+    steps:
+      - name: BUILD
+        run: |
+          echo "build!"
