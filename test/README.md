@@ -293,7 +293,6 @@ RES LINE2
 SQL2;
 ```
 
-
 ### 5. REGULAR CHECKS FOR SQL RESULTS
 Some SQL execution results have variables (such as ID).In addition to using SKIP CHECK and UNCHECK, the framework supports regular checks.  
 Note: Before using, please make sure the SQL is not in the SKIP CHECK list.  
