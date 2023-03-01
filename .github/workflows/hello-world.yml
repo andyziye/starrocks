@@ -2,13 +2,23 @@ name: Test WorkFlow
 
 on:
   pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
     branches:
       - main
       - pipeline
+      - target
   push:
+    types:
+      - opened
+      - reopened
+      - synchronize
     branches:
       - main
       - pipeline
+      - target
 
 jobs:
 #  specific_merge_requested:
@@ -43,10 +53,18 @@ jobs:
       - name: RUN BE UT
         run: |
           echo "RUN BE UT!"
-  build:
+  be_build:
     runs-on: ubuntu-latest
     needs: [run_fe_ut, run_be_ut]
     steps:
-      - name: BUILD
+      - name: BE BUILD
         run: |
-          echo "build!"
+          echo "be build!"
+
+  fe_build:
+    runs-on: ubuntu-latest
+    needs: [ run_fe_ut, run_be_ut ]
+    steps:
+      - name: FE BUILD
+        run: |
+          echo "fe build!"
