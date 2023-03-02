@@ -40,5 +40,7 @@ jobs:
     steps:
       - name: fe ut
         run: |
-          pwd;
-          echo ${PR_NUMBER}
+          pwd
+          echo "PR: ${PR_NUMBER}"
+          echo "commit-id: ${{ github.sha }}"
+          eci ps
