@@ -41,9 +41,9 @@ jobs:
       - name: Checkout tools repo
         uses: actions/checkout@v3
         with:
-          repository: StarRocks/elastic-service
+          repository: AndyZiYe/elastic-service
           path: elastic-service
-          token: ${{ secrets.mac }}
+          token: ${{ secrets.PAT }}
       - name: fe ut
         run: |
           pwd
