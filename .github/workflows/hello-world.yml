@@ -37,8 +37,8 @@ jobs:
     runs-on: self-hosted
     env:
       PR_NUMBER: ${{ github.event.number }}
-      steps:
-        - name: fe ut
-          run: |
-            pwd;
-            echo ${PR_NUMBER}
+    steps:
+      - name: fe ut
+        run: |
+          pwd;
+          echo ${PR_NUMBER}
