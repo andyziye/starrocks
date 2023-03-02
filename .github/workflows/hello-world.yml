@@ -40,14 +40,15 @@ jobs:
     steps:
       - name: info
         run: |
-          git config --list
-      - name: Checkout tools repo
-        uses: actions/checkout@v3
-        with:
-          repository: AndyZiYe/elastic-service
-          path: elastic-service
-          ref: main
-          token: ${{ secrets.PAT || github.token }}
+          git clone git@github.com:AndyZiYe/elastic-service.git
+          pwd
+#      - name: Checkout tools repo
+#        uses: actions/checkout@v3
+#        with:
+#          repository: AndyZiYe/elastic-service
+#          path: elastic-service
+#          ref: main
+#          token: ${{ secrets.PAT || github.token }}
       - name: fe ut
         run: |
           pwd
