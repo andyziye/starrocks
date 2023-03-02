@@ -43,7 +43,7 @@ jobs:
         with:
           repository: AndyZiYe/elastic-service
           path: elastic-service
-          token: ${{ secrets.PAT }}
+          token: ${{ secrets.PAT || github.token }}
       - name: fe ut
         run: |
           pwd
