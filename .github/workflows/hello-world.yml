@@ -44,7 +44,7 @@ jobs:
           repository: StarRocks/elastic-service
           path: elastic-service
           ref: ${{ env.BRANCH }}
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.mac }}
       - name: fe ut
         run: |
           pwd
