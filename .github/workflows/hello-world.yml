@@ -33,6 +33,16 @@ jobs:
         run: |
           echo -e "branch:  ${{ github.head_ref }}\ncommit-id: ${{ github.sha }}\nPR: ${{ github.base_ref }}\n${{ github.run_number }} \n${{ github.run_id }}"
 
+  run_fe_ut:
+    runs-on: self-hosted
+    if: ${{ github.event.label.name == 'be-build' }}
+    env:
+      PR_NUMBER: ${{ github.event.number }}
+    steps:
+      - name: pre build
+        run: |
+          sudo rm -rf ../starrocks/*
+
   allocate_fe_ut_resource:
     runs-on: ubuntu-latest
     steps:
