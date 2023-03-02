@@ -34,6 +34,7 @@ jobs:
 #          echo -e  "branch:  ${{ github.head_ref }}\ncommit-id: ${{ github.sha }}\nPR: ${{ github.base_ref }}\n${{ github.run_number }} \n${{ github.run_id }}"
 
   fe_ut:
+    needs: test
     runs-on: self-hosted
     env:
       PR_NUMBER: ${{ github.event.number }}

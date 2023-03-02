@@ -1,0 +1,30 @@
+name: Test WorkFlow INIT
+
+on:
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+    branches:
+      - main
+      - pipeline
+      - target
+  push:
+    types:
+      - opened
+      - reopened
+      - synchronize
+    branches:
+      - main
+      - pipeline
+      - target
+
+jobs:
+
+  test:
+    runs-on: self-hosted
+    steps:
+      - name: test
+        run: |
+          pwd
