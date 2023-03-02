@@ -26,6 +26,12 @@ jobs:
 #    if: ${{ github.event.pull_request.merged == true}}
 #    steps:
 #      - run: echo 'Merged job'
+  info:
+    runs-on: ubuntu-latest
+    steps:
+      - name: INFO
+        run: |
+          echo "branch:  ${{ github.head_ref }}\n commit-id: ${{ github.sha }}\n PR: ${{ github.base_ref }}"
 
   allocate_fe_ut_resource:
     runs-on: ubuntu-latest
