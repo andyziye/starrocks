@@ -38,6 +38,9 @@ jobs:
     env:
       PR_NUMBER: ${{ github.event.number }}
     steps:
+      - name: info
+        run: |
+          - git config --list
       - name: Checkout tools repo
         uses: actions/checkout@v3
         with:
