@@ -21,17 +21,13 @@ on:
       - target
 
 jobs:
-  #  specific_merge_requested:
-  #    runs-on: ubuntu-latest
-  #    if: ${{ github.event.pull_request.merged == true}}
-  #    steps:
-  #      - run: echo 'Merged job'
-#  info:
-#    runs-on: ubuntu-latest
-#    steps:
-#      - name: INFO
-#        run: |
-#          echo -e  "branch:  ${{ github.head_ref }}\ncommit-id: ${{ github.sha }}\nPR: ${{ github.base_ref }}\n${{ github.run_number }} \n${{ github.run_id }}"
+
+  test:
+    runs-on: self-hosted
+    steps:
+      - name: test
+        run: |
+          pwd
 
   fe_ut:
     needs: test
@@ -66,3 +62,15 @@ jobs:
       #          path: elastic-service
       #          ref: main
       #          token: ${{ secrets.PAT || github.token }}
+
+      #  specific_merge_requested:
+      #    runs-on: ubuntu-latest
+      #    if: ${{ github.event.pull_request.merged == true}}
+      #    steps:
+      #      - run: echo 'Merged job'
+      #  info:
+      #    runs-on: ubuntu-latest
+      #    steps:
+      #      - name: INFO
+      #        run: |
+      #          echo -e  "branch:  ${{ github.head_ref }}\ncommit-id: ${{ github.sha }}\nPR: ${{ github.base_ref }}\n${{ github.run_number }} \n${{ github.run_id }}"
