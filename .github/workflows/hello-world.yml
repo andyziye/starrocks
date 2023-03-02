@@ -44,10 +44,12 @@ jobs:
           git clone git@github.com:AndyZiYe/elastic-service.git
           pwd
           mkdir -p elastic-service/src/starrocks
+          echo $GITHUB_WORKSPACE
 
       - name: REPO
         uses: actions/checkout@v3
-        path: elastic-service/src/starrocks
+        with:
+          path: elastic-service/src/starrocks
 
       - name: fe ut
         run: |
