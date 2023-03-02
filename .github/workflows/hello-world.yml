@@ -31,7 +31,7 @@ jobs:
     steps:
       - name: INFO
         run: |
-          echo -e "branch:  ${{ github.head_ref }}\n commit-id: ${{ github.sha }}\ PR: ${{ github.base_ref }}\n ${{ github }}"
+          echo -e "branch:  ${{ github.head_ref }}\ncommit-id: ${{ github.sha }}\nPR: ${{ github.base_ref }}\n${{ github.run_number }} \n${{ github.run_id }}"
 
   allocate_fe_ut_resource:
     runs-on: ubuntu-latest
