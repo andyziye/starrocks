@@ -26,21 +26,27 @@ jobs:
   #    if: ${{ github.event.pull_request.merged == true}}
   #    steps:
   #      - run: echo 'Merged job'
-  info:
-    runs-on: ubuntu-latest
-    steps:
-      - name: INFO
-        run: |
-          echo -e  "branch:  ${{ github.head_ref }}\ncommit-id: ${{ github.sha }}\nPR: ${{ github.base_ref }}\n${{ github.run_number }} \n${{ github.run_id }}"
+#  info:
+#    runs-on: ubuntu-latest
+#    steps:
+#      - name: INFO
+#        run: |
+#          echo -e  "branch:  ${{ github.head_ref }}\ncommit-id: ${{ github.sha }}\nPR: ${{ github.base_ref }}\n${{ github.run_number }} \n${{ github.run_id }}"
 
   fe_ut:
     runs-on: self-hosted
     env:
       PR_NUMBER: ${{ github.event.number }}
     steps:
+      - name: Checkout tools repo
+        uses: actions/checkout@v3
+        with:
+          repository: StarRocks/elastic-service
+          path: elastic-service
       - name: fe ut
         run: |
           pwd
+          ls
           echo "PR: ${PR_NUMBER}"
           echo "commit-id: ${{ github.sha }}"
           eci ps
