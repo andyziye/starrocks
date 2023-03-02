@@ -22,15 +22,15 @@ on:
 
 jobs:
 
-  test:
+  TEST:
     runs-on: self-hosted
     steps:
-      - name: test
+      - name: test1
         run: |
           pwd
 
-  fe_ut:
-    needs: test
+  RUN FE UT:
+    needs: test1
     runs-on: self-hosted
     env:
       PR_NUMBER: ${{ github.event.number }}
