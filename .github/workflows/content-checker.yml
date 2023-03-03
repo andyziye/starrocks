@@ -2,19 +2,28 @@ name: label
 
 on:
   pull_request_target:
-    branches:
-      - main
-      - branch-2.2
-      - branch-2.3
-      - branch-2.4
-      - branch-2.5
+#    branches:
+#      - main
+#      - branch-2.2
+#      - branch-2.3
+#      - branch-2.4
+#      - branch-2.5
     types:
       - opened
       - reopened
       - edited
 
 jobs:
-  modify-branch-label:
+  title-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: thehanimo/pr-title-checker@v1.3.5
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          pass_on_octokit_error: false
+          configuration_path: ".github/pr-title-checker-config.json"
+
+  branch-info-check:
     runs-on: ubuntu-latest
     if: >
       (startsWith(github.event.pull_request.title, '[BugFix]') ||
@@ -27,7 +36,6 @@ jobs:
         uses: actions-ecosystem/action-add-labels@v1
         with:
           labels: 2.5
-          github_token: ${{ secrets.PAT }}
 
       - name: add branch-2.4 label
         if: contains(toJson(github.event.pull_request.body), '[x] 2.4')
@@ -40,7 +48,7 @@ jobs:
         uses: actions-ecosystem/action-add-labels@v1
         with:
           labels: 2.3
-          github_token: ${{ secrets.PAT }}
+          github_token: ${{ .PAT }}
 
       - name: add branch-2.2 label
         if: contains(toJson(github.event.pull_request.body), '[x] 2.2')
@@ -83,3 +91,11 @@ jobs:
           echo "You must mark this checkbox - I have checked the version labels which the pr will be auto backported to target branch"
           exit 1
 
+  automerge-check:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == false ${{ contains(github.event.pull_request.title, 'cherry-pick') || contains(github.event.pull_request.title, 'backport') }}
+    steps:
+      - uses: actions-ecosystem/action-add-labels@v1
+        with:
+          github_token: ${{ secrets.PAT }}
+          labels: automerge

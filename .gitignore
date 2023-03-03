@@ -74,3 +74,4 @@ build/
 cmake-build-debug/
 CMakeLists.txt
 /.github/workflows/hello-world.yml.bak
+/.github/workflows.old/
