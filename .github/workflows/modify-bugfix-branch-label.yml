@@ -27,6 +27,7 @@ jobs:
         uses: actions-ecosystem/action-add-labels@v1
         with:
           labels: 2.5
+          github_token: ${{ secrets.PAT }}
 
       - name: add branch-2.4 label
         if: contains(toJson(github.event.pull_request.body), '[x] 2.4')
@@ -39,6 +40,7 @@ jobs:
         uses: actions-ecosystem/action-add-labels@v1
         with:
           labels: 2.3
+          github_token: ${{ secrets.PAT }}
 
       - name: add branch-2.2 label
         if: contains(toJson(github.event.pull_request.body), '[x] 2.2')
