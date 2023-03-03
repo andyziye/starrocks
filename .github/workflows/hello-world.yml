@@ -25,17 +25,17 @@ jobs:
   TEST:
     runs-on: self-hosted
     steps:
-      - name: test1
+      - name: TEST INFO
         run: |
           pwd
 
   RUN_FE_UT:
-    needs: test1
+    needs: TEST
     runs-on: self-hosted
     env:
       PR_NUMBER: ${{ github.event.number }}
     steps:
-      - name: ECI TOOLS INIT
+      - name: INIT ECI TOOLS
         run: |
           rm -rf elastic-service
           git clone git@github.com:AndyZiYe/elastic-service.git
