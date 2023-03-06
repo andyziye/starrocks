@@ -32,9 +32,6 @@ jobs:
       !contains(github.event.pull_request.title, 'cherry-pick') &&
       !contains(github.event.pull_request.title, 'backport')
     steps:
-      - name: info
-        run: |
-          echo "${{ toJson(github.event.pull_request.body) }}"
 
       - name: add branch-3.0 label
         if: contains(toJson(github.event.pull_request.body), '[x] 3.0')
