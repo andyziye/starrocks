@@ -1,4 +1,4 @@
-name: CONTENT CHECKER 1
+name: CONTENT CHECKER
 
 on:
   pull_request_target:
