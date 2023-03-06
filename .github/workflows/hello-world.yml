@@ -62,7 +62,7 @@ jobs:
   TEST4:
     runs-on: ubuntu-latest
     needs: [TEST, TEST2, TEST3]
-    if: ${{ cancelled() || success() }}
+    if: ${{ !failure() }}
     steps:
       - name: TEST INFO
         id: test03
