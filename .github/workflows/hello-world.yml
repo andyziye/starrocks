@@ -31,7 +31,7 @@ jobs:
         id: test01
         run: |
           echo ${{github.event.action}}
-          run: echo "test01=hello01" >> $GITHUB_OUTPUT
+          echo "test01=hello01" >> $GITHUB_OUTPUT
 
   TEST2:
     runs-on: ubuntu-latest
@@ -43,7 +43,7 @@ jobs:
         id: test02
         run: |
           echo ${{github.event.action}}
-          run: echo "test02=hello02" >> $GITHUB_OUTPUT
+          echo "test02=hello02" >> $GITHUB_OUTPUT
 
   TEST3:
     runs-on: ubuntu-latest
@@ -54,8 +54,7 @@ jobs:
       - name: TEST INFO
         id: test03
         run: |
-          echo ${{github.event.action}}
-          run: echo "test03=hello03" >> $GITHUB_OUTPUT 
+          echo "test03=hello03" >> $GITHUB_OUTPUT 
 
   TEST4:
     runs-on: ubuntu-latest
