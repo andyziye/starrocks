@@ -1,0 +1,299 @@
+name: PRE INSPECTION
+
+on:
+#  pull_request_target:
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+
+    paths:
+      - 'docs/**'
+      - 'be/**'
+      - 'fe/**.java'
+      - 'fe/**.xml'
+
+jobs:
+  doc-checker:
+    runs-on: ubuntu-latest
+    name: DOC FILTER
+    id: doc-checker
+    if: github.event.action != 'reopened' || github.event.action != 'synchronize'
+    outputs:
+      output1: ${{ steps.doc-changes-info.outputs.doc }}
+    steps:
+      - uses: dorny/paths-filter@v2
+        id: changes
+        with:
+          filters: |
+            doc:
+            - 'docs/**'
+      - name: DOC CHECK INFO
+        id: doc-changes-info
+        run: |
+          echo "doc=${{ steps.changes.outputs.doc }}" >> $GITHUB_OUTPUT
+
+  add-doc-label:
+    needs: doc-checker
+    runs-on: ubuntu-latest
+    name: ADD DOC LABEL
+    if: ${{ needs.doc-checker.outputs.output1 == 'true' }}
+    steps:
+      - name: add document label
+        uses: actions-ecosystem/action-add-labels@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          labels: documentation
+
+  markdownlint:
+    runs-on: ubuntu-latest
+    needs: add-doc-label
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - uses: articulate/actions-markdownlint@v1.1.0
+        with:
+          config: "docs/.markdownlint.yaml"
+          files: 'docs/**/*.md'
+          ignore: node_modules
+          version: 0.28.1
+
+  be-checker:
+    runs-on: ubuntu-latest
+    name: BE FILTER
+    id: be-checker
+    if: github.event.action != 'reopened' || github.event.action != 'synchronize'
+    outputs:
+      output1: ${{ steps.be-changes-info.outputs.be }}
+    steps:
+      - uses: dorny/paths-filter@v2
+        id: changes
+        with:
+          filters: |
+            be:
+            - 'be/**'
+      - name: BE CHECK INFO
+        id: be-changes-info
+        run: |
+          echo "be=${{ steps.changes.outputs.be }}" >> $GITHUB_OUTPUT
+
+#  clang-format:
+#    runs-on: self-hosted
+#    needs: be-checker
+#    if: ${{ needs.be-checker.outputs.output1 == 'true' }}
+#    steps:
+#      # TODO http://39.101.206.100:8090/view/CI/job/starrocks_clang-format/
+#      - name: clang format
+#        run: |
+#          echo "clang format..."
+
+#  tscancode:
+#    runs-on: self-hosted
+#    needs: be-checker
+#    if: ${{ needs.doc-checker.outputs.output1 == 'true' }}
+#    steps:
+#      # TODO http://39.101.206.100:8090/view/CI/job/starrocks_tscancode/
+#      - name: tscancode
+#        run: |
+#          echo "tscancode..."
+
+  be-ut:
+    runs-on: self-hosted
+    needs: [ clang-format, tscancode ]
+    name: BE UT
+    steps:
+      # TODO http://39.101.206.100:8090/view/CI/job/starrocks_be_unittest/
+      - name: RUN
+        run: |
+          echo "BE UT..."
+
+#  clang-tidy:
+#    runs-on: self-hosted
+#    needs: be-ut
+#    env:
+#      PR_NUMBER: ${{ github.event.number }}
+#    steps:
+#      - name: pre build
+#        run: |
+#          sudo rm -rf ../starrocks/*
+#
+#      - uses: dorny/paths-filter@v2
+#        id: changes
+#        with:
+#          filters: |
+#            be:
+#            - 'be/**'
+#
+#      - uses: actions/checkout@v3
+#        with:
+#          fetch-depth: 0
+#
+#      - name: set up build
+#        run: |
+#          time scp jenkins@ci01:~/userContent/be-build-$PR_NUMBER.tar.gz .
+#          tar xzf be-build-$PR_NUMBER.tar.gz
+#          workdir=$(pwd)
+#          echo $workdir
+#          sed -i "s|\/root\/starrocks|$workdir|g" be/ut_build_ASAN/compile_commands.json
+#
+#      - uses: ZedThree/clang-tidy-review@v0.10.1
+#        id: review
+#        with:
+#          build_dir: be/build_Release
+#          config_file: .clang-tidy
+#
+#      - name: post build
+#        run: |
+#          sudo rm -rf ../starrocks/*
+#
+#  sonarcloud-be:
+#    runs-on: self-hosted
+#    needs: be-ut
+#    env:
+#      PR_NUMBER: ${{ github.event.number }}
+#    steps:
+#      - name: pre build
+#        run: |
+#          sudo rm -rf ../starrocks/*
+#
+#      - uses: dorny/paths-filter@v2
+#        id: changes
+#        with:
+#          filters: |
+#            be:
+#            - 'be/**'
+#
+#      - name: set up
+#        run: |
+#          time scp jenkins@ci01:~/userContent/be-build-$PR_NUMBER.tar.gz .
+#          tar xzf be-build-$PR_NUMBER.tar.gz
+#          workdir=$(pwd)
+#          echo $workdir
+#          sed -i "s|\/root\/starrocks|$workdir|g" be/build-wrapper/build-wrapper-dump.json
+#
+#      - name: Run sonar-scanner
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#          SONAR_TOKEN: f0fb4d25c03bae90c2e994c45c29c49dc86fc169
+#        run: |
+#          sonar-scanner -Dsonar.organization=starrocks -Dsonar.projectKey=Starrocks_be -Dsonar.cfamily.build-wrapper-output="be/build-wrapper" -Dsonar.host.url="https://sonarcloud.io" -Dsonar.sources="be/src" -Dsonar.pullrequest.key=${{ github.event.number }} -Dsonar.pullrequest.base=${{ github.base_ref }} -Dsonar.pullrequest.branch=${{ github.head_ref }} -Dsonar.projectBaseDir=. -Dsonar.pullrequest.github.repository=StarRocks/starrocks
+#
+#      - name: post build
+#        run: |
+#          sudo rm -rf ../starrocks/*
+
+  fe-checker:
+    runs-on: ubuntu-latest
+    name: FE FILTER
+    id: fe-checker
+    if: github.event.action != 'reopened' || github.event.action != 'synchronize'
+    outputs:
+      output1: ${{ steps.fe-changes-info.outputs.fe }}
+    steps:
+      - uses: dorny/paths-filter@v2
+        id: changes
+        with:
+          filters: |
+            fe:
+            - 'fe/**.java'
+            - 'fe/**.xml'
+      - name: FE CHECK INFO
+        id: fe-changes-info
+        run: |
+          echo "fe=${{ steps.changes.outputs.fe }}" >> $GITHUB_OUTPUT
+
+  fe-codestyle-check:
+    runs-on: ubuntu-latest
+    needs: fe-checker
+    if: ${{ needs.fe-checker.outputs.output1 == 'true' }}
+    steps:
+      - uses: dorny/paths-filter@v2
+        id: java-file
+        name: JAVA FILE
+        with:
+          filters: |
+            java:
+            - 'fe/**.java'
+      - name: "Checkout ${{ github.ref }} ( ${{ github.sha }} )"
+        if: ${{ steps.java-file.outputs.java == 'true' }}
+        uses: actions/checkout@v3
+        with:
+          persist-credentials: false
+          submodules: recursive
+
+      - name: Copy checkstyle files
+        run: cp fe/checkstyle* .
+
+      - name: Run java checkstyle
+        uses: dbelyaev/action-checkstyle@v0.6.1
+        with:
+          workdir: "./fe"
+          checkstyle_config: checkstyle.xml
+          reporter: 'github-pr-check'
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          fail_on_error: true
+          level: error
+
+  fe-ut:
+    runs-on: self-hosted
+    needs: fe-codestyle-check
+    name: FE UT
+    steps:
+      # TODO http://39.101.206.100:8090/view/CI/job/starrocks_fe_unittest/
+      - name: RUN
+        run: |
+          echo "FE UT..."
+
+#  fe-sonarcloud:
+#    runs-on: ubuntu-latest
+#    needs: fe-ut
+#    steps:
+#      - uses: actions/checkout@v3
+#        with:
+#          fetch-depth: 0
+#
+#      - name: Set up JDK 11
+#        uses: actions/setup-java@v3
+#        with:
+#          java-version: 11
+#          distribution: 'adopt'
+#
+#      - name: Cache SonarCloud packages
+#        uses: actions/cache@v3
+#        with:
+#          path: ~/.sonar/cache
+#          key: ${{ runner.os }}-sonar
+#          restore-keys: ${{ runner.os }}-sonar
+#
+#      - name: Cache Maven packages
+#        uses: actions/cache@v3
+#        with:
+#          path: ~/.m2
+#          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+#          restore-keys: ${{ runner.os }}-maven
+#
+#      - name: Setup thrift
+#        uses: dodopizza/setup-thrift@v1
+#        with:
+#          version: 0.13.0
+#
+#      - name: Analyze FE
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#          SONAR_TOKEN: f0fb4d25c03bae90c2e994c45c29c49dc86fc169 # ${{ secrets.SONAR_TOKEN }}
+#        run: |
+#          thrift --version
+#          whereis thrift
+#          export STARROCKS_HOME=${{ github.workspace }}
+#          source env.sh
+#          mkdir -p thirdparty/installed/bin/
+#          cd thirdparty/installed/bin/ && ln -s /usr/local/bin/thrift thrift
+#          cd ${{ github.workspace }}/fe
+#          mvn -B -DskipTests verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=StarRocks_starrocks -Dsonar.pullrequest.key=${{ github.event.number }} -Dsonar.pullrequest.base=${{ github.base_ref }} -Dsonar.pullrequest.branch=${{ github.head_ref }}
+#
+#
+#

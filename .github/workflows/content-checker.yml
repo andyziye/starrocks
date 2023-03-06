@@ -12,7 +12,6 @@ on:
       - opened
       - reopened
       - edited
-      - synchronize
 
 jobs:
   title-check:
@@ -92,6 +91,7 @@ jobs:
         run: |
           echo "You must mark this checkbox - I have checked the version labels which the pr will be auto backported to target branch"
           echo "111"
+          exit 1234
 
   automerge-check:
     runs-on: ubuntu-latest
@@ -103,3 +103,13 @@ jobs:
         with:
           github_token: ${{ secrets.PAT }}
           labels: automerge
+
+      - run: sleep 20 # wait the pr review upload artifact finished
+
+      - name: automerge
+        if: contains(github.event.pull_request.labels.*.name, 'automerge')
+        uses: peter-evans/enable-pull-request-automerge@v2
+        with:
+          token: ${{ secrets.PAT }}
+          pull-request-number: ${{ github.event.pull_request.number }}
+          merge-method: rebase
