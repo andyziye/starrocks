@@ -96,7 +96,7 @@ jobs:
   automerge-check:
     runs-on: ubuntu-latest
     needs: branch-info-check
-    if: !failure()
+    if: ${{ !failure() }}
 #    if: !failure() && github.event.action != 'reopened' && (contains(github.event.pull_request.title, 'cherry-pick') || contains(github.event.pull_request.title, 'backport'))
     steps:
       - name: add automerge label
