@@ -36,7 +36,7 @@ jobs:
   TEST2:
     runs-on: ubuntu-latest
     needs: TEST
-    if:  ${{ needs.TEST.outputs.output1 }} == 'true'
+    if:  ${{ needs.TEST.outputs.output1 }} != 'true'
     outputs:
       output1: ${{ steps.test02.outputs.test02 }}
     steps:
