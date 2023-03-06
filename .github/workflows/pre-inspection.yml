@@ -80,6 +80,26 @@ jobs:
         run: |
           echo "be=${{ steps.changes.outputs.be }}" >> $GITHUB_OUTPUT
 
+    clang-format:
+      runs-on: ubuntu-latest
+      needs: be-checker
+      if: ${{ needs.be-checker.outputs.output1 == 'true' }}
+      steps:
+        # TODO http://39.101.206.100:8090/view/CI/job/starrocks_clang-format/
+        - name: clang format
+          run: |
+            echo "clang format..."
+
+    tscancode:
+      runs-on: ubuntu-latest
+      needs: be-checker
+      if: ${{ needs.doc-checker.outputs.output1 == 'true' }}
+      steps:
+        # TODO http://39.101.206.100:8090/view/CI/job/starrocks_tscancode/
+        - name: tscancode
+          run: |
+            echo "tscancode..."
+
 #  clang-format:
 #    runs-on: self-hosted
 #    needs: be-checker
