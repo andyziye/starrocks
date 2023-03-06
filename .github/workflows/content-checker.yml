@@ -12,6 +12,7 @@ on:
       - opened
       - reopened
       - edited
+      - synchronize
 
 jobs:
   title-check:
