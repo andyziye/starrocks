@@ -24,6 +24,7 @@ jobs:
           configuration_path: ".github/pr-title-checker-config.json"
 
   branch-info-check:
+    needs: title-check
     runs-on: ubuntu-latest
     if: >
       (startsWith(github.event.pull_request.title, '[BugFix]') ||
@@ -93,9 +94,19 @@ jobs:
 
   automerge-check:
     runs-on: ubuntu-latest
-    if: github.event.pull_request.merged == false ${{ contains(github.event.pull_request.title, 'cherry-pick') || contains(github.event.pull_request.title, 'backport') }}
+    needs: branch-info-check
+    if: ${{ github.event.action != 'reopened' }} && (${{ contains(github.event.pull_request.title, 'cherry-pick') || contains(github.event.pull_request.title, 'backport') }})
     steps:
-      - uses: actions-ecosystem/action-add-labels@v1
+      - name: add automerge label
+        uses: actions-ecosystem/action-add-labels@v1
         with:
           github_token: ${{ secrets.PAT }}
           labels: automerge
+
+      - name: automerge
+        if: contains(github.event.pull_request.labels.*.name, 'automerge')
+        uses: peter-evans/enable-pull-request-automerge@v2
+        with:
+          token: ${{ secrets.PAT }}
+          pull-request-number: ${{ github.event.pull_request.number }}
+          merge-method: rebase
