@@ -34,7 +34,7 @@ jobs:
     steps:
       - name: info
         run: |
-          echo ${{ github.event.pull_request.body }}
+          echo "${{ toJson(github.event.pull_request.body) }}"
 
       - name: add branch-3.0 label
         if: contains(toJson(github.event.pull_request.body), '[x] 3.0')
