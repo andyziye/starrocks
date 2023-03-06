@@ -47,7 +47,6 @@ jobs:
           echo "test02=hello02" >> $GITHUB_OUTPUT
       - run: |
           echo ${{ needs.TEST.outputs.output1 }}
-          echo2 4
 
   TEST3:
     runs-on: ubuntu-latest
