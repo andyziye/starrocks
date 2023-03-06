@@ -58,7 +58,7 @@ jobs:
 
   TEST4:
     runs-on: ubuntu-latest
-    needs: [TEST2, TEST3]
+    needs: [TEST, TEST2, TEST3]
     steps:
       - name: TEST INFO
         id: test03
