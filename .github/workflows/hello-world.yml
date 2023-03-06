@@ -68,4 +68,4 @@ jobs:
         id: test03
         run: |
           echo ${{ needs.TEST2.outputs.output1 }}
-          echo ${{ needs.TEST.outputs.output1 }}
+          echo 1
