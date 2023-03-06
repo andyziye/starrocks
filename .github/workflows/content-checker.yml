@@ -92,7 +92,7 @@ jobs:
         run: |
           echo "You must mark this checkbox - I have checked the version labels which the pr will be auto backported to target branch"
           echo "111"
-          exit 1234
+          exit 12345555
 
   automerge-check:
     runs-on: ubuntu-latest
@@ -104,6 +104,8 @@ jobs:
         with:
           github_token: ${{ secrets.PAT }}
           labels: automerge
+
+      - run: sleep 10
 
       - name: automerge
         if: contains(github.event.pull_request.labels.*.name, 'automerge')
