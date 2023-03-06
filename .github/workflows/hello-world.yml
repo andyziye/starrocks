@@ -46,7 +46,7 @@ jobs:
           echo ${{github.event.action}}
           echo "test02=hello02" >> $GITHUB_OUTPUT
       - run: |
-          echo 123
+          echo ${{ needs.TEST.outputs.output1 }}
 
   TEST3:
     runs-on: ubuntu-latest
