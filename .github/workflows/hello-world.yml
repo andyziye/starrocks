@@ -23,7 +23,7 @@ on:
 jobs:
 
   TEST:
-    runs-on: self-hosted
+    runs-on:  ubuntu-latest
     outputs:
       output1: ${{ steps.test01.outputs.test01 }}
     steps:
@@ -34,7 +34,7 @@ jobs:
           run: echo "test01=hello01" >> $GITHUB_OUTPUT
 
   TEST2:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     needs: TEST
     outputs:
       output1: ${{ steps.test02.outputs.test02 }}
@@ -46,7 +46,7 @@ jobs:
           run: echo "test02=hello02" >> $GITHUB_OUTPUT
 
   TEST3:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     needs: TEST
     outputs:
       output1: ${{ steps.test03.outputs.test03 }}
@@ -58,7 +58,7 @@ jobs:
           run: echo "test03=hello03" >> $GITHUB_OUTPUT 
 
   TEST4:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     needs: [TEST2, TEST3]
     steps:
       - name: TEST INFO
