@@ -92,7 +92,6 @@ jobs:
         run: |
           echo "You must mark this checkbox - I have checked the version labels which the pr will be auto backported to target branch"
           echo "111"
-          exit 12345555
 
   automerge-check:
     runs-on: ubuntu-latest
