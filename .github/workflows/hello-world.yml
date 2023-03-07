@@ -22,6 +22,15 @@ on:
 
 jobs:
 
+  lint:
+    name: clang-format Code Formatter
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clang Code Formatter
+        uses: ivanludvig/clang-format-action@v1.4
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   TEST:
     runs-on:  self-hosted
     outputs:
@@ -32,7 +41,7 @@ jobs:
         run: |
           echo ${{github.event.action}}
           echo "test01=hello01" >> $GITHUB_OUTPUT
-          sleep 602
+          sleep 603
 
   TEST2:
     runs-on: ubuntu-latest
