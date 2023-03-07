@@ -73,7 +73,7 @@ public:
 
     ~Impl();
 
-    void init_or_die();
+    void  init_or_die();
 
     void stop();
 
