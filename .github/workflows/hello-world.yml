@@ -22,60 +22,65 @@ on:
 
 jobs:
 
-  lint:
+  clang-format:
     name: clang-format Code Formatter
     runs-on: ubuntu-latest
     steps:
-      - name: Clang Code Formatter
-        uses: ivanludvig/clang-format-action@v1.4
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  TEST:
-    runs-on:  self-hosted
-    outputs:
-      output1: ${{ steps.test01.outputs.test01 }}
-    steps:
-      - name: TEST INFO
-        id: test01
-        run: |
-          echo ${{github.event.action}}
-          echo "test01=hello01" >> $GITHUB_OUTPUT
-          sleep 603
-
-  TEST2:
-    runs-on: ubuntu-latest
-    needs: TEST
-    if:  ${{ needs.TEST.outputs.output1 == 'hello01' }} && !contains(github.event.pull_request.labels.*.name, '2.5')
-    outputs:
-      output1: ${{ steps.test02.outputs.test02 }}
-    steps:
-      - name: TEST INFO
-        id: test02
-        run: |
-          echo ${{github.event.action}}
-          echo "test02=hello02" >> $GITHUB_OUTPUT
+      - name: Check out code
+          uses: actions/checkout@v3
+          with:
+            fetch-depth: 0
       - run: |
-          echo ${{ needs.TEST.outputs.output1 }}
+          pwd
+      - run: |
+          ls ${{ github.workspace }}
+      
 
-  TEST3:
-    runs-on: ubuntu-latest
-    needs: TEST
-    outputs:
-      output1: ${{ steps.test03.outputs.test03 }}
-    steps:
-      - name: TEST INFO
-        id: test03
-        run: |
-          echo "test03=hello03" >> $GITHUB_OUTPUT 
-
-  TEST4:
-    runs-on: ubuntu-latest
-    needs: [TEST, TEST2, TEST3]
-    if: ${{ !failure() }}
-    steps:
-      - name: TEST INFO
-        id: test03
-        run: |
-          echo ${{ needs.TEST2.outputs.output1 }}
-          echo 1
+#  TEST:
+#    runs-on:  self-hosted
+#    outputs:
+#      output1: ${{ steps.test01.outputs.test01 }}
+#    steps:
+#      - name: TEST INFO
+#        id: test01
+#        run: |
+#          echo ${{github.event.action}}
+#          echo "test01=hello01" >> $GITHUB_OUTPUT
+#          sleep 603
+#
+#  TEST2:
+#    runs-on: ubuntu-latest
+#    needs: TEST
+#    if:  ${{ needs.TEST.outputs.output1 == 'hello01' }} && !contains(github.event.pull_request.labels.*.name, '2.5')
+#    outputs:
+#      output1: ${{ steps.test02.outputs.test02 }}
+#    steps:
+#      - name: TEST INFO
+#        id: test02
+#        run: |
+#          echo ${{github.event.action}}
+#          echo "test02=hello02" >> $GITHUB_OUTPUT
+#      - run: |
+#          echo ${{ needs.TEST.outputs.output1 }}
+#
+#  TEST3:
+#    runs-on: ubuntu-latest
+#    needs: TEST
+#    outputs:
+#      output1: ${{ steps.test03.outputs.test03 }}
+#    steps:
+#      - name: TEST INFO
+#        id: test03
+#        run: |
+#          echo "test03=hello03" >> $GITHUB_OUTPUT
+#
+#  TEST4:
+#    runs-on: ubuntu-latest
+#    needs: [TEST, TEST2, TEST3]
+#    if: ${{ !failure() }}
+#    steps:
+#      - name: TEST INFO
+#        id: test03
+#        run: |
+#          echo ${{ needs.TEST2.outputs.output1 }}
+#          echo 1
