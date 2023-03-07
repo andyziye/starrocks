@@ -81,7 +81,7 @@ jobs:
           echo "be=${{ steps.changes.outputs.be }}" >> $GITHUB_OUTPUT
 
   clang-format:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: be-checker
     if: ${{ needs.be-checker.outputs.output1 == 'true' }}
     steps:
