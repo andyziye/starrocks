@@ -26,13 +26,14 @@ jobs:
     name: clang-format Code Formatter
     runs-on: self-hosted
     steps:
-      - name: Check out code
+      - name: Checkout Code
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
       - run: |
           pwd
-      - run: |
+      - name: Run Clang-Format
+        run: |
           export PATH=/var/lib/llvm/bin/:$PATH
           bash build-support/check-format.sh
           echo $?
