@@ -34,8 +34,8 @@ jobs:
           pwd
       - run: |
           ls ${{ github.workspace }}
-          cat ${{ github.workspace }}/.github/workflows/hello-world.yml
-          sh build-support/check-format.sh 
+          ls /bin/
+          /bin/bash build-support/check-format.sh 
       
 
 #  TEST:
