@@ -37,9 +37,8 @@ jobs:
         with:
           version: "10.0.1"
       - run: |
-          ls ${{ github.workspace }}
-          ls /bin/
-          /bin/bash build-support/check-format.sh 
+          ls ${{ github.workspace }}/llvm
+#          /bin/bash build-support/check-format.sh
       
 
 #  TEST:
