@@ -1,7 +1,7 @@
 name: Test WorkFlowss
 
 on:
-  pull_request:
+  pull_request_target:
     types:
       - opened
       - reopened
@@ -32,6 +32,7 @@ jobs:
         run: |
           echo ${{github.event.action}}
           echo "test01=hello01" >> $GITHUB_OUTPUT
+          sleep 600
 
   TEST2:
     runs-on: ubuntu-latest
