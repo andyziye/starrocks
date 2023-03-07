@@ -67,6 +67,7 @@ const uint32_t REPORT_OLAP_TABLE_WORKER_COUNT = 1;
 const uint32_t REPORT_WORKGROUP_WORKER_COUNT = 1;
 const uint32_t REPORT_RESOURCE_USAGE_WORKER_COUNT = 1;
 
+
 class AgentServer::Impl {
 public:
     explicit Impl(ExecEnv* exec_env, bool is_compute_node) : _exec_env(exec_env), _is_compute_node(is_compute_node) {}
