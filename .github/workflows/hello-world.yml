@@ -23,7 +23,7 @@ on:
 jobs:
 
   TEST:
-    runs-on:  ubuntu-latest
+    runs-on:  self-hosted
     outputs:
       output1: ${{ steps.test01.outputs.test01 }}
     steps:
