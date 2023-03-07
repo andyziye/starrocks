@@ -34,6 +34,7 @@ jobs:
           pwd
       - name: Run Clang-Format
         run: |
+          echo 1
           export PATH=/var/lib/llvm/bin/:$PATH
           bash build-support/check-format.sh
 
