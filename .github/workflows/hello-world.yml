@@ -44,16 +44,16 @@ jobs:
 #          version: "10.0.1"
 
 
-#  TEST:
-#    runs-on:  self-hosted
-#    outputs:
-#      output1: ${{ steps.test01.outputs.test01 }}
-#    steps:
-#      - name: TEST INFO
-#        id: test01
-#        run: |
-#          echo ${{github.event.action}}
-#          echo "test01=hello01" >> $GITHUB_OUTPUT
+  TEST:
+    runs-on:  self-hosted
+    outputs:
+      output1: ${{ steps.test01.outputs.test01 }}
+    steps:
+      - name: TEST INFO
+        id: test01
+        run: |
+          echo ${{github.event.action}}
+          echo "test01=hello01" >> $GITHUB_OUTPUT
 #          sleep 603
 #
 #  TEST2:
