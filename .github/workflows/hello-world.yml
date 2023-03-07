@@ -35,7 +35,7 @@ jobs:
       - run: |
           export PATH=/var/lib/llvm/bin/:$PATH
           bash build-support/check-format.sh
-
+          echo $?
 
 #          export PATH=${{ github.workspace }}/llvm/bin/:$PATH
 #      - name: Install LLVM and Clang
