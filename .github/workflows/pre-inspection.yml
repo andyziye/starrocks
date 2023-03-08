@@ -95,7 +95,7 @@ jobs:
         run: |
           chown -R 1011:1012 /var/lib/llvm
           ls -al /var/lib/llvm/bin
-          export PATH=/var/lib/llvm/bin/:$PATH
+          export PATH=/var/lib/llvm/bin:$PATH
           bash build-support/check-format.sh
 
   tscancode:
