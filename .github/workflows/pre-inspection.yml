@@ -130,8 +130,7 @@ jobs:
       - name: Prepare ECI
         uses: actions/checkout@v3
         with:
-          repository: StarRocks/elastic-service
-          ssh-key: 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
+          repository: AndyZiYe/elastic-service
 
       - name: Checkout Code
         uses: actions/checkout@v3
