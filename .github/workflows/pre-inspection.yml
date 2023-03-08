@@ -106,16 +106,6 @@ jobs:
         run: |
           echo "tscancode..."
 
-#  clang-format:
-#    runs-on: self-hosted
-#    needs: be-checker
-#    if: ${{ needs.be-checker.outputs.output1 == 'true' }}
-#    steps:
-#      # TODO http://39.101.206.100:8090/view/CI/job/starrocks_clang-format/
-#      - name: clang format
-#        run: |
-#          echo "clang format..."
-
 #  tscancode:
 #    runs-on: self-hosted
 #    needs: be-checker
@@ -147,6 +137,7 @@ jobs:
         with:
           fetch-depth: 0
           path: './elastic-service/src'
+          ssh-key: ${{ secrets.PAT }}
 
       - name: RUN UT
         run: |
