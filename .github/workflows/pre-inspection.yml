@@ -93,6 +93,8 @@ jobs:
           pwd
       - name: Run Clang-Format
         run: |
+          ls /var/lib/llvm
+          ls -al /var/lib/llvm/bin
           export PATH=/var/lib/llvm/bin/:$PATH
           bash build-support/check-format.sh
 
