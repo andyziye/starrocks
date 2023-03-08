@@ -1,9 +1,9 @@
 name: PRE INSPECTION
 
 on:
-# TODO 删除替换
-#  pull_request_target:
-  pull_request:
+  # TODO 删除替换
+  #  pull_request:
+  pull_request_target:
     types:
       - opened
       - reopened
