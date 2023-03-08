@@ -53,7 +53,6 @@
 #include "storage/snapshot_manager.h"
 #include "util/phmap/phmap.h"
 #include "util/threadpool.h"
-#include "util/threadpool.h"
 
 namespace starrocks {
 
@@ -153,6 +152,7 @@ void AgentServer::Impl::init_or_die() {
         // The ideal queue size of threadpool should be larger than the maximum number of tablet of a partition.
         // But it seems that there's no limit for the number of tablets of a partition.
         // Since a large queue size brings a little overhead, a big one is chosen here.
+        // 123
         BUILD_DYNAMIC_TASK_THREAD_POOL("publish_version", config::transaction_publish_version_worker_count,
                                        config::transaction_publish_version_worker_count,
                                        DEFAULT_DYNAMIC_THREAD_POOL_QUEUE_SIZE, _thread_pool_publish_version);
