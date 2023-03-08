@@ -134,18 +134,18 @@ jobs:
           token: ${{ secrets.PAT }}
           path: './'
 
-      - name: Checkout Code
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-          path: './elastic-service/src'
-
-
-      - name: RUN UT
-        run: |
-          cd ${{ github.workspace }}/elastic-service
-          pwd
-          ls
+#      - name: Checkout Code
+#        uses: actions/checkout@v3
+#        with:
+#          fetch-depth: 0
+#          path: './elastic-service/src'
+#
+#
+#      - name: RUN UT
+#        run: |
+#          cd ${{ github.workspace }}/elastic-service
+#          pwd
+#          ls
 
 #  clang-tidy:
 #    runs-on: self-hosted
