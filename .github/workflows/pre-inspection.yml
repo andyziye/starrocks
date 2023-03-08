@@ -132,7 +132,7 @@ jobs:
         with:
           repository: AndyZiYe/elastic-service
           token: ${{ secrets.PAT }}
-#          ssh-key: ${{ secrets.PAT2 }}
+          path: './'
 
       - name: Checkout Code
         uses: actions/checkout@v3
