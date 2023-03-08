@@ -53,6 +53,7 @@
 #include "storage/snapshot_manager.h"
 #include "util/phmap/phmap.h"
 #include "util/threadpool.h"
+#include "util/threadpool.h"
 
 namespace starrocks {
 
