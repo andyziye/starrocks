@@ -127,12 +127,12 @@ jobs:
         run: |
           echo "BE UT..."
 
-      - name: Prepare ECI
-        uses: actions/checkout@v3
-        with:
-          repository: AndyZiYe/elastic-service
-          token: ${{ secrets.PAT }}
-          path: './elastic-service'
+#      - name: Prepare ECI
+#        uses: actions/checkout@v3
+#        with:
+#          repository: AndyZiYe/elastic-service
+#          token: ${{ secrets.PAT }}
+#          path: './elastic-service'
 
       - name: Checkout Code
         uses: actions/checkout@v3
