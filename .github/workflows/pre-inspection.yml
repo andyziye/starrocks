@@ -132,14 +132,14 @@ jobs:
         with:
           repository: AndyZiYe/elastic-service
           token: ${{ secrets.PAT }}
-          path: './'
+          path: './elastic-service'
 
-#      - name: Checkout Code
-#        uses: actions/checkout@v3
-#        with:
-#          fetch-depth: 0
-#          path: './elastic-service/src'
-#
+      - name: Checkout Code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          path: './elastic-service/src'
+
 #
 #      - name: RUN UT
 #        run: |
