@@ -137,6 +137,23 @@ jobs:
         run: |
           echo "BE UT..."
 
+      - name: Prepare ECI
+        uses: actions/checkout@v3
+          with:
+            repository: StarRocks/elastic-service
+
+      - name: Checkout Code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          path: './elastic-service/src'
+
+      - name: RUN UT
+        run: |
+          cd ${{ github.workspace }}/elastic-service
+          pwd
+          ls
+
 #  clang-tidy:
 #    runs-on: self-hosted
 #    needs: be-ut
