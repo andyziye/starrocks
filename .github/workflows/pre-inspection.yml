@@ -94,15 +94,15 @@ jobs:
           export PATH=/var/lib/llvm/bin:$PATH
           bash build-support/check-format.sh
 
-#  tscancode:
-#    runs-on: ubuntu-latest
-#    needs: be-checker
-#    if: ${{ needs.doc-checker.outputs.output1 == 'true' }}
-#    steps:
-#      # TODO http://39.101.206.100:8090/view/CI/job/starrocks_tscancode/
-#      - name: tscancode
-#        run: |
-#          echo "tscancode..."
+  tscancode:
+    runs-on: ubuntu-latest
+    needs: be-checker
+    if: ${{ needs.doc-checker.outputs.output1 == 'true' }}
+    steps:
+      # TODO http://39.101.206.100:8090/view/CI/job/starrocks_tscancode/
+      - name: tscancode
+        run: |
+          echo "tscancode..."
 
   be-ut:
     runs-on: self-hosted
