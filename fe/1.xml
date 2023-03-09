@@ -36,5 +36,5 @@ https://github.com/checkstyle/checkstyle/blob/master/src/main/resources/google_c
         "https://checkstyle.org/dtds/configuration_1_3.dtd">
 
 <module name="hahaha">
-    <property name="random" value="1"/>
+    <property name="random" value="11"/>
 </module>
