@@ -217,7 +217,7 @@ jobs:
   fe-checker:
     runs-on: ubuntu-latest
     name: FE FILTER
-    if: github.event.action != 'reopened' || github.event.action != 'synchronize'
+    if: github.event.action != 'reopened' && github.event.action != 'synchronize'
     outputs:
       output1: ${{ steps.fe-changes-info.outputs.fe }}
     steps:
