@@ -279,11 +279,20 @@ jobs:
     runs-on: self-hosted
     needs: fe-codestyle-check
     name: FE UT
+    env:
+      PR_NUMBER: ${{ github.event.number }}
     steps:
       # TODO http://39.101.206.100:8090/view/CI/job/starrocks_fe_unittest/
       - name: RUN
         run: |
           echo "FE UT..."
+
+      - name: UPDATE ECI & RUN UT
+        run: |
+          cd /var/lib/elastic-service
+          git pull
+          echo ${PR_NUMBER}
+#          bash bin/elastic-ut.sh --pr --module fe
 
 #  fe-sonarcloud:
 #    runs-on: ubuntu-latest
