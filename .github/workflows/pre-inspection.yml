@@ -241,6 +241,7 @@ jobs:
           submodules: recursive
 
       - name: Copy checkstyle files
+        if: success()
         run: |
           pwd
           ls
