@@ -345,6 +345,11 @@ public class ShowExecutorTest {
                 GlobalStateMgr.getCurrentState().getMetadataMgr().getDb("default_catalog", "emptyDb");
                 minTimes = 0;
                 result = null;
+
+                GlobalStateMgr.getCurrentState().getMetadataMgr().getTable("default_catalog", "testDb",
+                        "testTbl");
+                minTimes = 0;
+                result = table;
             }
         };
 
@@ -1092,6 +1097,7 @@ public class ShowExecutorTest {
         };
 
         ShowTableStmt stmt = new ShowTableStmt("test", true, null, null, "hive_catalog");
+        ctx.setCurrentUserIdentity(UserIdentity.ROOT);
         ShowExecutor executor = new ShowExecutor(ctx, stmt);
         ShowResultSet resultSet = executor.execute();
 

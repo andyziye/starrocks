@@ -604,9 +604,36 @@ public class MaterializedViewTest {
         String createMvSql = "create materialized view mv1 as select p_partkey, p_name, length(p_brand) from part_with_mv;";
         StmtExecutor stmtExecutor = new StmtExecutor(connectContext, createMvSql);
         stmtExecutor.execute();
-        Assert.assertEquals("Materialized view does not support this function:length(`test`.`part_with_mv`.`p_brand`)," +
-                " supported functions are: [min, max, hll_union, percentile_union, count, sum, bitmap_union]",
+        Assert.assertEquals("Getting analyzing error. Detail message: Materialized view does not support " +
+                        "this function:length(`test`.`part_with_mv`.`p_brand`), supported functions are: " +
+                        "[min, max, hll_union, percentile_union, count, sum, bitmap_union].",
                 connectContext.getState().getErrorMessage());
+    }
+
+    @Test(expected = DdlException.class)
+    public void testNonPartitionMvSupportedProperties() throws Exception {
+        UtFrameUtils.createMinStarRocksCluster();
+        ConnectContext connectContext = UtFrameUtils.createDefaultCtx();
+        StarRocksAssert starRocksAssert = new StarRocksAssert(connectContext);
+        starRocksAssert.withDatabase("test").useDatabase("test")
+                .withTable("CREATE TABLE goods(\n" +
+                        "item_id1 INT,\n" +
+                        "item_name STRING,\n" +
+                        "price FLOAT\n" +
+                        ") DISTRIBUTED BY HASH(item_id1)\n" +
+                        "PROPERTIES(\"replication_num\" = \"1\");");
+
+        starRocksAssert.withMaterializedView("CREATE MATERIALIZED VIEW order_mv\n" +
+                "DISTRIBUTED BY HASH(item_id1) BUCKETS 12\n" +
+                "PROPERTIES (\n" +
+                "\"partition_refresh_number\" = \"10\"\n" +
+                ")\n" +
+                "REFRESH ASYNC\n" +
+                "AS SELECT\n" +
+                "item_id1,\n" +
+                "sum(price) as total\n" +
+                "FROM goods\n" +
+                "GROUP BY item_id1;");
     }
 
     @Test

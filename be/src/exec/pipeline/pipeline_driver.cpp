@@ -67,6 +67,9 @@ Status PipelineDriver::prepare(RuntimeState* runtime_state) {
     _output_full_timer = ADD_CHILD_TIMER(_runtime_profile, "OutputFullTime", "PendingTime");
     _pending_finish_timer = ADD_CHILD_TIMER(_runtime_profile, "PendingFinishTime", "PendingTime");
 
+    _peak_driver_queue_size_counter = _runtime_profile->AddHighWaterMarkCounter(
+            "PeakDriverQueueSize", TUnit::UNIT, RuntimeProfile::Counter::create_strategy(TUnit::UNIT));
+
     DCHECK(_state == DriverState::NOT_READY);
 
     auto* source_op = source_operator();
@@ -187,6 +190,12 @@ Status PipelineDriver::prepare(RuntimeState* runtime_state) {
     return Status::OK();
 }
 
+void PipelineDriver::update_peak_driver_queue_size_counter(size_t new_value) {
+    if (_peak_driver_queue_size_counter != nullptr) {
+        _peak_driver_queue_size_counter->set(new_value);
+    }
+}
+
 static inline bool is_multilane(pipeline::OperatorPtr& op) {
     if (dynamic_cast<query_cache::MultilaneOperator*>(op.get()) != nullptr) {
         return true;
@@ -240,6 +249,21 @@ StatusOr<DriverState> PipelineDriver::process(RuntimeState* runtime_state, int w
 
                 if (_check_fragment_is_canceled(runtime_state)) {
                     return _state;
+                }
+
+                // Run spill stragety
+                // TODO: FIXME
+                // a simple spill stragety
+                auto query_mem_tracker = _query_ctx->mem_tracker();
+                if (runtime_state->enable_spill() &&
+                    sink_operator()->revocable_mem_bytes() > runtime_state->spill_operator_min_bytes() &&
+                    !sink_operator()->need_mark_spill()) {
+                    auto spill_manager = _query_ctx->spill_manager();
+                    if (query_mem_tracker->consumption() - spill_manager->pending_spilled_bytes() >
+                        query_mem_tracker->limit() * runtime_state->spill_mem_limit_threshold()) {
+                        spill_manager->update_spilled_bytes(sink_operator()->revocable_mem_bytes());
+                        sink_operator()->mark_need_spill();
+                    }
                 }
 
                 // pull chunk from current operator and push the chunk onto next

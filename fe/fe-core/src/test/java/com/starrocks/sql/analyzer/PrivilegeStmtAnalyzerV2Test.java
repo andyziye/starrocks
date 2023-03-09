@@ -171,7 +171,7 @@ public class PrivilegeStmtAnalyzerV2Test {
             UtFrameUtils.parseStmtWithNewParser(sql, ctx);
             Assert.fail();
         } catch (Exception e) {
-            Assert.assertTrue(e.getMessage().contains("Cant grant SELECT to object DATABASE"));
+            Assert.assertTrue(e.getMessage().contains("Cannot grant or revoke SELECT on 'DATABASE' type object"));
         }
 
         sql = "grant insert on table dbx to test_user";
@@ -258,7 +258,8 @@ public class PrivilegeStmtAnalyzerV2Test {
         try {
             UtFrameUtils.parseStmtWithNewParser(sql, ctx);
         } catch (AnalysisException e) {
-            Assert.assertTrue(e.getMessage().contains("Operation DROP USER failed for 'root'@'%' : cannot drop user'root'@'%'"));
+            Assert.assertTrue(e.getMessage().contains(
+                    "Operation DROP USER failed for 'root'@'%' : cannot drop user 'root'@'%'"));
         }
     }
 
@@ -476,7 +477,7 @@ public class PrivilegeStmtAnalyzerV2Test {
             Assert.fail();
         } catch (Exception e) {
             Assert.assertTrue(e.getMessage().contains("Getting syntax error at line 1, column 35. " +
-                    "Detail message: Input 'tables' is not valid at this position, please check the SQL Reference."));
+                    "Detail message: Input 'tables' is not valid at this position."));
         }
 
         sql = "revoke select on ALL tables IN ALL tables from test_user";
@@ -494,7 +495,7 @@ public class PrivilegeStmtAnalyzerV2Test {
             Assert.fail();
         } catch (Exception e) {
             System.out.println(e.getMessage());
-            Assert.assertTrue(e.getMessage().contains("cannot find catalog"));
+            Assert.assertTrue(e.getMessage().contains("invalid object tokens"));
         }
 
         sql = "grant impersonate on ALL users in all databases to test_user";
@@ -617,7 +618,7 @@ public class PrivilegeStmtAnalyzerV2Test {
             Assert.fail();
         } catch (Exception e) {
             Assert.assertTrue(e.getMessage().contains("Getting syntax error at line 1, column 34. " +
-                    "Detail message: Input 'views' is not valid at this position, please check the SQL Reference."));
+                    "Detail message: Input 'views' is not valid at this position."));
         }
 
         sql = "revoke select on ALL views IN ALL views from test_user";

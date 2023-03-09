@@ -207,6 +207,7 @@ void NodeChannel::_open(int64_t index_id, RefCountClosure<PTabletWriterOpenResul
     request.set_miss_auto_increment_column(_parent->_miss_auto_increment_column);
     request.set_abort_delete(_parent->_abort_delete);
     request.set_is_incremental(incremental_open);
+    request.set_sender_id(_parent->_sender_id);
     for (auto& tablet : tablets) {
         auto ptablet = request.add_tablets();
         ptablet->CopyFrom(tablet);
@@ -243,8 +244,8 @@ void NodeChannel::_open(int64_t index_id, RefCountClosure<PTabletWriterOpenResul
     request.release_id();
     request.release_schema();
 
-    VLOG(2) << "NodeChannel[" << _load_info << "] send open request to [" << _node_info->host << ":"
-            << _node_info->brpc_port << "]";
+    VLOG(2) << "NodeChannel[" << _load_info << "] send open request [incremental: " << incremental_open << "] to ["
+            << _node_info->host << ":" << _node_info->brpc_port << "]";
 }
 
 void NodeChannel::try_incremental_open() {
@@ -871,10 +872,12 @@ Status OlapTableSink::init(const TDataSink& t_sink, RuntimeState* state) {
     _tuple_desc_id = table_sink.tuple_id;
     _is_lake_table = table_sink.is_lake_table;
     _keys_type = table_sink.keys_type;
-    _null_expr_in_auto_increment = table_sink.null_expr_in_auto_increment;
-    _miss_auto_increment_column = table_sink.miss_auto_increment_column;
-    _abort_delete = table_sink.abort_delete;
-    _auto_increment_slot_id = table_sink.auto_increment_slot_id;
+    if (table_sink.__isset.null_expr_in_auto_increment) {
+        _null_expr_in_auto_increment = table_sink.null_expr_in_auto_increment;
+        _miss_auto_increment_column = table_sink.miss_auto_increment_column;
+        _abort_delete = table_sink.abort_delete;
+        _auto_increment_slot_id = table_sink.auto_increment_slot_id;
+    }
     if (table_sink.__isset.write_quorum_type) {
         _write_quorum_type = table_sink.write_quorum_type;
     }
@@ -1603,9 +1606,6 @@ Status OlapTableSink::try_close(RuntimeState* state) {
 }
 
 Status OlapTableSink::_fill_auto_increment_id(Chunk* chunk) {
-    if (_has_automatic_partition) {
-        return Status::OK();
-    }
     if (_auto_increment_slot_id == -1) {
         return Status::OK();
     }
