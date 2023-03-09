@@ -215,11 +215,11 @@ jobs:
   fe-checker:
     runs-on: ubuntu-latest
     name: FE FILTER
-    id: fe-checker
     if: github.event.action != 'reopened' || github.event.action != 'synchronize'
     outputs:
       output1: ${{ steps.fe-changes-info.outputs.fe }}
     steps:
+
       - uses: dorny/paths-filter@v2
         id: changes
         with:
@@ -227,6 +227,7 @@ jobs:
             fe:
               - 'fe/**.java'
               - 'fe/**.xml'
+
       - run: echo ${{ steps.changes.outputs.fe }}
 
       - name: FE CHECK INFO
