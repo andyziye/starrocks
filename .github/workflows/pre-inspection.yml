@@ -221,7 +221,7 @@ jobs:
           echo "fe=${{ steps.changes.outputs.fe }}" >> $GITHUB_OUTPUT
 
   fe-codestyle-check:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     needs: fe-checker
     if: ${{ needs.fe-checker.outputs.output1 == 'true' }}
     steps:
@@ -232,6 +232,7 @@ jobs:
           filters: |
             java:
             - 'fe/**.java'
+
       - name: "Checkout ${{ github.ref }} ( ${{ github.sha }} )"
         if: ${{ steps.java-file.outputs.java == 'true' }}
         uses: actions/checkout@v3
