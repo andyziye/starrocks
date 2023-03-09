@@ -73,7 +73,7 @@ StarRocks’s streamlined architecture is mainly composed of two modules：Front
 
 ## Resources
 
-### 📚 Read the docs
+### 📚 Read the docss
 
 | Section | Description |
 |-|-|
