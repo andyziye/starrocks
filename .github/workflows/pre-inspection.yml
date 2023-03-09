@@ -15,6 +15,19 @@ on:
       - 'fe/**.java'
       - 'fe/**.xml'
 
+  push:
+    #  pull_request_target:
+    types:
+      - opened
+      - reopened
+      - synchronize
+
+    paths:
+      - 'docs/**'
+      - 'be/**'
+      - 'fe/**.java'
+      - 'fe/**.xml'
+
 jobs:
   doc-checker:
     runs-on: ubuntu-latest
