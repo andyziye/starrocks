@@ -220,21 +220,12 @@ jobs:
     outputs:
       output1: ${{ steps.fe-changes-info.outputs.fe }}
     steps:
-      - name: "Checkout ${{ github.ref }} ( ${{ github.sha }} )"
-        id: checkout
-        uses: actions/checkout@v3
-        with:
-#          persist-credentials: falses
-#          submodules: recursive
-          fetch-depth: 0
-
       - uses: dorny/paths-filter@v2
         id: changes
         with:
           filters: |
             fe:
               - 'fe/**'
-#              - 'fe/**.xml'
 
       - run: echo ${{ steps.changes.outputs.fe }}
 
@@ -254,7 +245,7 @@ jobs:
         with:
           filters: |
             java:
-              - 'fe/**.java'
+              - '**.java'
 
       - run: echo ${{ steps.java-file.outputs.java }}
 
