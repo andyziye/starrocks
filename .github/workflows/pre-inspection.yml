@@ -221,7 +221,6 @@ jobs:
     steps:
       - name: "Checkout ${{ github.ref }} ( ${{ github.sha }} )"
         id: checkout
-        if: ${{ steps.java-file.outputs.java == 'true' }}
         uses: actions/checkout@v3
         with:
           persist-credentials: false
