@@ -224,8 +224,9 @@ jobs:
         id: checkout
         uses: actions/checkout@v3
         with:
-          persist-credentials: false
-          submodules: recursive
+#          persist-credentials: false
+#          submodules: recursive
+          fetch-depth: 0
 
       - uses: dorny/paths-filter@v2
         id: changes
