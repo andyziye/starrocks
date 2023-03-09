@@ -233,6 +233,8 @@ jobs:
             java:
               - 'fe/**.java'
 
+      - run: echo ${{ steps.java-file.outputs.java }}
+
       - name: "Checkout ${{ github.ref }} ( ${{ github.sha }} )"
         id: checkout
         if: ${{ steps.java-file.outputs.java == 'true' }}
