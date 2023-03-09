@@ -211,6 +211,7 @@ jobs:
 #      - name: post build
 #        run: |
 #          sudo rm -rf ../starrocks/*
+#
 
   fe-checker:
     runs-on: ubuntu-latest
