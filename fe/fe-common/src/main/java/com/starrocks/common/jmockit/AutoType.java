@@ -10,7 +10,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * 11125
+ * 1112544
  * Helper class to convert type between Java's wrapper type and primitive type
  * There are 8 wrapper/primitive types in Java:
  * |Wrapped Type         |Primitive Type
