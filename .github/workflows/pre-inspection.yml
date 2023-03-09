@@ -221,7 +221,7 @@ jobs:
           echo "fe=${{ steps.changes.outputs.fe }}" >> $GITHUB_OUTPUT
 
   fe-codestyle-check:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: fe-checker
     if: ${{ needs.fe-checker.outputs.output1 == 'true' }}
     steps:
