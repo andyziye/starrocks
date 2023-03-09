@@ -106,8 +106,8 @@ jobs:
 
   be-ut:
     runs-on: self-hosted
-    needs: [ clang-format, tscancode ]
-    if: ${{ !failure() }}
+#    needs: [ clang-format, tscancode ]
+    needs: [ clang-format ]
     name: BE UT
     steps:
       # TODO http://39.101.206.100:8090/view/CI/job/starrocks_be_unittest/
