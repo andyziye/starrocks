@@ -224,8 +224,10 @@ jobs:
         with:
           filters: |
             fe:
-            - 'fe/**.java'
-            - 'fe/**.xml'
+              - 'fe/**.java'
+              - 'fe/**.xml'
+      - run: echo ${{ steps.changes.outputs.fe }}
+
       - name: FE CHECK INFO
         id: fe-changes-info
         run: |
