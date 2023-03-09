@@ -126,6 +126,7 @@ Status HdfsScanner::_build_scanner_context() {
     ctx.min_max_tuple_desc = _scanner_params.min_max_tuple_desc;
     ctx.case_sensitive = _scanner_params.case_sensitive;
     ctx.timezone = _runtime_state->timezone();
+    ctx.iceberg_schema = _scanner_params.iceberg_schema;
     ctx.stats = &_stats;
 
     return Status::OK();
@@ -159,7 +160,7 @@ Status HdfsScanner::open(RuntimeState* runtime_state) {
         if (_scanner_params.open_limit != nullptr) {
             _scanner_params.open_limit->fetch_add(1, std::memory_order_relaxed);
         }
-        LOG(INFO) << "open file success: " << _scanner_params.path;
+        VLOG_FILE << "open file success: " << _scanner_params.path;
     }
     return status;
 }

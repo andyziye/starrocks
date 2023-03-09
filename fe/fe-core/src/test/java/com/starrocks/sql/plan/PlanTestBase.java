@@ -1129,6 +1129,16 @@ public class PlanTestBase {
         }
     }
 
+    public void assertCContains(String text, String... pattern) {
+        try {
+            for (String s : pattern) {
+                Assert.assertTrue(text, text.contains(s));
+            }
+        } catch (Error error) {
+            collector.addError(error);
+        }
+    }
+
     public static void assertNotContains(String text, String pattern) {
         Assert.assertFalse(text, text.contains(pattern));
     }
@@ -1315,7 +1325,7 @@ public class PlanTestBase {
                             pair = UtFrameUtils.getPlanAndFragment(connectContext, sql.toString());
                         } catch (Exception ex) {
                             if (!exceptString.toString().isEmpty()) {
-                                Assert.assertEquals(ex.getMessage(), exceptString.toString());
+                                Assert.assertEquals(exceptString.toString(), ex.getMessage());
                                 continue;
                             }
                             Assert.fail("Planning failed, message: " + ex.getMessage() + ", sql: " + sql);
