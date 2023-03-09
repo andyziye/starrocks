@@ -231,9 +231,10 @@ jobs:
         with:
           filters: |
             java:
-            - 'fe/**.java'
+              - 'fe/**.java'
 
       - name: "Checkout ${{ github.ref }} ( ${{ github.sha }} )"
+        id: checkout
         if: ${{ steps.java-file.outputs.java == 'true' }}
         uses: actions/checkout@v3
         with:
@@ -241,13 +242,14 @@ jobs:
           submodules: recursive
 
       - name: Copy checkstyle files
-        if: success()
+        if: ${{ steps.java-file.outputs.java == 'true' }}
         run: |
           pwd
           ls
           cp fe/checkstyle* .
 
       - name: Run java checkstyle
+        if: ${{ steps.java-file.outputs.java == 'true' }}
         uses: dbelyaev/action-checkstyle@v0.6.1
         with:
           workdir: "./fe"
