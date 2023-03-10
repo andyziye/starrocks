@@ -299,7 +299,7 @@ jobs:
           echo ${PR_NUMBER}
           cd bin
           eci_id=`bash elastic-ut.sh --pr ${PR_NUMBER} --module fe`
-          echo "eci_id=${eci_id}" >> $GITHUB_OUTPUT
+          echo "##[set-output name=eci_id;]$(echo ${eci_id})"
 
       - name: clean
         run: |
