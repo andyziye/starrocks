@@ -292,7 +292,7 @@ jobs:
 
       - name: UPDATE ECI & RUN UT
         id: run_ut
-        shell: pwsh
+        shell: bash
         run: |
           set -x
           cd /var/lib/elastic-service
@@ -303,7 +303,7 @@ jobs:
           echo "##[set-output name=eci_id;]$(echo ${eci_id})"
 
       - name: clean
-        shell: pwsh
+        shell: bash
         run: |
           eci rm ${{ steps.run_ut.outputs.eci_id }}
           
