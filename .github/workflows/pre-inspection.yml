@@ -293,6 +293,7 @@ jobs:
       - name: UPDATE ECI & RUN UT
         id: run_ut
         run: |
+          set -x
           cd /var/lib/elastic-service
           git pull
           echo ${PR_NUMBER}
