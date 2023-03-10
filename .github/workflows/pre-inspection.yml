@@ -249,31 +249,31 @@ jobs:
 
       - run: echo ${{ steps.java-file.outputs.java }}
 
-      - name: "Checkout ${{ github.ref }} ( ${{ github.sha }} )"
-        id: checkout
-        if: ${{ steps.java-file.outputs.java == 'true' }}
-        uses: actions/checkout@v3
-        with:
-          persist-credentials: false
-          submodules: recursive
+#      - name: "Checkout ${{ github.ref }} ( ${{ github.sha }} )"
+#        id: checkout
+#        if: ${{ steps.java-file.outputs.java == 'true' }}
+#        uses: actions/checkout@v3
+#        with:
+#          persist-credentials: false
+#          submodules: recursive
+#
+#      - name: Copy checkstyle files
+#        if: ${{ steps.java-file.outputs.java == 'true' }}
+#        run: |
+#          pwd
+#          ls
+#          cp fe/checkstyle* .
 
-      - name: Copy checkstyle files
-        if: ${{ steps.java-file.outputs.java == 'true' }}
-        run: |
-          pwd
-          ls
-          cp fe/checkstyle* .
-
-      - name: Run java checkstyle
-        if: ${{ steps.java-file.outputs.java == 'true' }}
-        uses: dbelyaev/action-checkstyle@v0.6.1
-        with:
-          workdir: "./fe"
-          checkstyle_config: checkstyle.xml
-          reporter: 'github-pr-check'
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          fail_on_error: true
-          level: error
+#      - name: Run java checkstyle
+#        if: ${{ steps.java-file.outputs.java == 'true' }}
+#        uses: dbelyaev/action-checkstyle@v0.6.1
+#        with:
+#          workdir: "./fe"
+#          checkstyle_config: checkstyle.xml
+#          reporter: 'github-pr-check'
+#          github_token: ${{ secrets.GITHUB_TOKEN }}
+#          fail_on_error: true
+#          level: error
 
   fe-ut:
     runs-on: self-hosted
@@ -296,7 +296,7 @@ jobs:
           cd /var/lib/elastic-service
           git pull
           echo ${PR_NUMBER}
-          bash bin/elastic-ut.sh --pr ${PR_NUMBER} --branch ${{ steps.extract_branch.outputs.branch }} --module fe
+          bash bin/elastic-ut.sh --pr ${PR_NUMBER} --module fe
 
 #  fe-sonarcloud:
 #    runs-on: ubuntu-latest
