@@ -296,7 +296,8 @@ jobs:
           cd /var/lib/elastic-service
           git pull
           echo ${PR_NUMBER}
-          ./bin/elastic-ut.sh --pr ${PR_NUMBER} --module fe
+          cd bin
+          bash elastic-ut.sh --pr ${PR_NUMBER} --module fe
 
 #  fe-sonarcloud:
 #    runs-on: ubuntu-latest
