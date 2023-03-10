@@ -278,6 +278,7 @@ jobs:
   fe-ut:
     runs-on: self-hosted
     needs: fe-codestyle-check
+    label: local
     name: FE UT
     env:
       PR_NUMBER: ${{ github.event.number }}
