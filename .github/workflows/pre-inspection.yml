@@ -302,12 +302,6 @@ jobs:
           eci_id=`bash elastic-ut.sh --pr ${PR_NUMBER} --module fe`
           echo "##[set-output name=eci_id;]$(echo ${eci_id})"
 
-      - name: clean
-        shell: bash
-        run: |
-          eci rm ${{ steps.run_ut.outputs.eci_id }}
-          
-
 #  fe-sonarcloud:
 #    runs-on: ubuntu-latest
 #    needs: fe-ut
