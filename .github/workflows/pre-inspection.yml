@@ -301,7 +301,7 @@ jobs:
           git pull
           echo ${PR_NUMBER}
           cd bin
-          bash elastic-ut.sh --pr ${PR_NUMBER} --module fe
+          bash bin/elastic-ut.sh --pr ${PR_NUMBER} --module fe
 #          echo "##[set-output name=eci_id;]$(echo ${eci_id})"
 
 #  fe-sonarcloud:
