@@ -54,6 +54,7 @@ jobs:
         run: |
           echo ${{github.event.action}}
           echo "test01=hello01" >> $GITHUB_OUTPUT
+          sleep 60
 #
 #  TEST2:
 #    runs-on: ubuntu-latest

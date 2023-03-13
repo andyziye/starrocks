@@ -296,7 +296,7 @@ jobs:
         run: |
           set -ex
           echo 123
-          ln -s /root/tools/github-runner/elastic-service ./elastic-service
+          ln -s /home/disk1/sr/local_runner/elastic-service ./elastic-service
           cd ./elastic-service
           git pull
           echo ${PR_NUMBER}
