@@ -276,7 +276,7 @@ jobs:
 #          level: error
 
   fe-ut:
-    runs-on: [self-hosted, local]
+    runs-on: [self-hosted]
     needs: fe-codestyle-check
     name: FE UT
     env:
