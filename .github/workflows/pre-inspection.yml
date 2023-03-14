@@ -121,21 +121,24 @@ jobs:
     needs: [ clang-format ]
     name: BE UT
     steps:
-      # TODO http://39.101.206.100:8090/view/CI/job/starrocks_be_unittest/
-      - name: RUN
-        run: |
-          echo "BE UT..."
+      - name: Extract branch
+          id: extract_branch
+          run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
 
-      - name: UPDATE ECI
+      - name: UPDATE ECI & RUN UT
+        id: run_ut
+        shell: bash
         run: |
-          cd /var/lib/elastic-service
-          git pull
+          set -ex
+          rm -rf ./elastic-service
+          ln -s /var/lib/elastic-service ./elastic-service
+          cd elastic-service && git pull
+          ./bin/elastic-ut.sh --pr ${PR_NUMBER} --module fe
 
-      - name: RUN UT
+      - name: clean ECI
         run: |
-          cd ${{ github.workspace }}/elastic-service
-          pwd
-          ls
+          echo ${{ steps.run_ut.outputs.ECI_ID }}
+          eci rm ${{ steps.run_ut.outputs.ECI_ID }}
 
 #  clang-tidy:
 #    runs-on: self-hosted
@@ -263,7 +266,7 @@ jobs:
 #          pwd
 #          ls
 #          cp fe/checkstyle* .
-
+#
 #      - name: Run java checkstyle
 #        if: ${{ steps.java-file.outputs.java == 'true' }}
 #        uses: dbelyaev/action-checkstyle@v0.6.1
@@ -293,17 +296,13 @@ jobs:
       - name: UPDATE ECI & RUN UT
         id: run_ut
         shell: bash
+        timeout-minutes: 60
         run: |
           set -ex
           rm -rf ./elastic-service
           ln -s /var/lib/elastic-service ./elastic-service
-          cd elastic-service
-          git pull
-          echo ${PR_NUMBER}
-          cd bin
-          bash elastic-ut.sh --pr ${PR_NUMBER} --module fe
-
-#          echo "##[set-output name=eci_id;]$(echo ${eci_id})"
+          cd elastic-service && git pull
+          ./bin/elastic-ut.sh --pr ${PR_NUMBER} --module fe
 
       - name: clean ECI
         run: |
