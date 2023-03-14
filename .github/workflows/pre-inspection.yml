@@ -307,7 +307,8 @@ jobs:
           while [[ $aaa -lt 10 ]]
           do
             sleep 5
-            grep Completed /var/local/env/1 && kill ${tail_pid}
+            grep Completed /var/local/env/1 && kill ${tail_pid} && break
+            aaa=$(aaa+1)
           done
           
           bash elastic-ut.sh --pr ${PR_NUMBER} --module fe
