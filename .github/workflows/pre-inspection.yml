@@ -128,6 +128,7 @@ jobs:
       - name: UPDATE ECI & RUN UT
         id: run_ut
         shell: bash
+        timeout-minutes: 60
         run: |
           set -ex
           rm -rf ./elastic-service
