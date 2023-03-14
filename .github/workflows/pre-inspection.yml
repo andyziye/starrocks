@@ -301,16 +301,6 @@ jobs:
           git pull
           echo ${PR_NUMBER}
           cd bin
-          tail -f /var/local/env/1 &
-          tail_pid=$!
-          aaa=0
-          while [[ $aaa -lt 10 ]]
-          do
-            sleep 5
-            grep Completed /var/local/env/1 && kill ${tail_pid} && break
-            aaa=$((aaa+1))
-          done
-          
           bash elastic-ut.sh --pr ${PR_NUMBER} --module fe
 
 #          echo "##[set-output name=eci_id;]$(echo ${eci_id})"
