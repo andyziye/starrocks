@@ -308,7 +308,7 @@ jobs:
       - name: clean ECI
         run: |
           echo ${{ steps.run_ut.outputs.ECI_ID }}
-          eci exec rm ${{ steps.run_ut.outputs.ECI_ID }}
+          eci rm ${{ steps.run_ut.outputs.ECI_ID }}
 
 #  fe-sonarcloud:
 #    runs-on: ubuntu-latest
