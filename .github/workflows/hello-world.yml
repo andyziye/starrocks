@@ -51,7 +51,7 @@ jobs:
     steps:
       - name: TEST INFO
         id: test01
-        timeout-minutes:60
+        timeout-minutes: 60
         run: |
           echo ${{github.event.action}}
           echo "test01=hello01" >> $GITHUB_OUTPUT
