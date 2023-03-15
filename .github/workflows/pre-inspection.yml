@@ -120,6 +120,8 @@ jobs:
 #    needs: [ clang-format, tscancode ]
     needs: [ clang-format ]
     name: BE UT
+    env:
+      PR_NUMBER: ${{ github.event.number }}
     steps:
       - name: Extract branch
         id: extract_branch
