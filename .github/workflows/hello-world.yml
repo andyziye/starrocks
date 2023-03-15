@@ -60,7 +60,7 @@ jobs:
         id: jacoco
         uses: madrapps/jacoco-report@v1.3
         with:
-          paths: /var/local/env/test/result/index.html
+          paths: /var/local/env/test/result/jacoco-sessions.html
 #          token: ${{ secrets.GITHUB_TOKEN }}
           min-coverage-overall: 0
           min-coverage-changed-files: 0
