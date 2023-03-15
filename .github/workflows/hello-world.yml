@@ -60,7 +60,7 @@ jobs:
         id: jacoco_reporter
         uses: PavanMudigonda/jacoco-reporter@v4.8
         with:
-          coverage_results_path: /var/local/env/test/result/jacoco-.html
+          coverage_results_path: /var/local/env/test/result/index.html
           coverage_report_name: Coverage
           coverage_report_title: JaCoCo
           github_token: ${{ secrets.GITHUB_TOKEN }}
