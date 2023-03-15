@@ -123,7 +123,7 @@ private:
     std::unique_ptr<ReportWorkgroupTaskWorkerPool> _report_workgroup_workers;
     std::unique_ptr<ReportResourceUsageTaskWorkerPool> _report_resource_usage_workers;
 
-    // Compute node only need _report_resource_usage_workers.,,,
+    // Compute node only need _report_resource_usage_workers.,,,,
     const bool _is_compute_node;
 };
 
