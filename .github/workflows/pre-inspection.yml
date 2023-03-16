@@ -241,7 +241,7 @@ jobs:
     needs: [be-ut, fe-ut]
     env:
       PR_NUMBER: ${{ github.event.number }}
-    if: needs.be-ut.result == 'success' || needs.fe-ut.result == 'success'
+    if: always() && (needs.be-ut.result == 'success' || needs.fe-ut.result == 'success')
     steps:
       - name: UPDATE ECI & RUN BUILD
         id: run_build
