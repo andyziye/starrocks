@@ -29,7 +29,7 @@ Before contributing, please read this article carefully to quickly understand th
     - Automatic checks: whether the submitter has signed the Contributor License Agreement (CLA) and whether the documentation conforms to the Markdown syntax.
     - Manual review: Committers will read and communicate with you about the documentation. It will be merged into StarRocks documentation repository and updated on the official website.
 
-## Documentation template
+## Documentation templatess
 
 [Functions](https://github.com/StarRocks/docs/blob/main/sql-reference/sql-functions/How%20to%20Write%20Functions%20Documentation.md)
 [SQL command template](https://github.com/StarRocks/docs/blob/main/sql-reference/sql-statements/SQL%20command%20template.md)
