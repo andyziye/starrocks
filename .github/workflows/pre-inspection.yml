@@ -144,83 +144,6 @@ jobs:
           echo ${{ steps.run_ut.outputs.ECI_ID }}
           eci rm ${{ steps.run_ut.outputs.ECI_ID }}
 
-#  clang-tidy:
-#    runs-on: self-hosted
-#    needs: be-ut
-#    env:
-#      PR_NUMBER: ${{ github.event.number }}
-#    steps:
-#      - name: pre build
-#        run: |
-#          sudo rm -rf ../starrocks/*
-#
-#      - uses: dorny/paths-filter@v2
-#        id: changes
-#        with:
-#          filters: |
-#            be:
-#            - 'be/**'
-#
-#      - uses: actions/checkout@v3
-#        with:
-#          fetch-depth: 0
-#
-#      - name: set up build
-#        run: |
-#          time scp jenkins@ci01:~/userContent/be-build-$PR_NUMBER.tar.gz .
-#          tar xzf be-build-$PR_NUMBER.tar.gz
-#          workdir=$(pwd)
-#          echo $workdir
-#          sed -i "s|\/root\/starrocks|$workdir|g" be/ut_build_ASAN/compile_commands.json
-#
-#      - uses: ZedThree/clang-tidy-review@v0.10.1
-#        id: review
-#        with:
-#          build_dir: be/build_Release
-#          config_file: .clang-tidy
-#
-#      - name: post build
-#        run: |
-#          sudo rm -rf ../starrocks/*
-#
-#  sonarcloud-be:
-#    runs-on: self-hosted
-#    needs: be-ut
-#    env:
-#      PR_NUMBER: ${{ github.event.number }}
-#    steps:
-#      - name: pre build
-#        run: |
-#          sudo rm -rf ../starrocks/*
-#
-#      - uses: dorny/paths-filter@v2
-#        id: changes
-#        with:
-#          filters: |
-#            be:
-#            - 'be/**'
-#
-#      - name: set up
-#        run: |
-#          time scp jenkins@ci01:~/userContent/be-build-$PR_NUMBER.tar.gz .
-#          tar xzf be-build-$PR_NUMBER.tar.gz
-#          workdir=$(pwd)
-#          echo $workdir
-#          sed -i "s|\/root\/starrocks|$workdir|g" be/build-wrapper/build-wrapper-dump.json
-#
-#      - name: Run sonar-scanner
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#          SONAR_TOKEN: f0fb4d25c03bae90c2e994c45c29c49dc86fc169
-#        run: |
-#          sonar-scanner -Dsonar.organization=starrocks -Dsonar.projectKey=Starrocks_be -Dsonar.cfamily.build-wrapper-output="be/build-wrapper" -Dsonar.host.url="https://sonarcloud.io" -Dsonar.sources="be/src" -Dsonar.pullrequest.key=${{ github.event.number }} -Dsonar.pullrequest.base=${{ github.base_ref }} -Dsonar.pullrequest.branch=${{ github.head_ref }} -Dsonar.projectBaseDir=. -Dsonar.pullrequest.github.repository=StarRocks/starrocks
-#
-#      - name: post build
-#        run: |
-#          sudo rm -rf ../starrocks/*
-#
-#
-
   fe-checker:
     runs-on: ubuntu-latest
     name: FE FILTER
@@ -313,6 +236,110 @@ jobs:
           echo ${{ steps.run_ut.outputs.ECI_ID }}
           eci rm ${{ steps.run_ut.outputs.ECI_ID }}
 
+  build:
+    runs-on: self-hosted
+    needs: [be-ut, fe-ut]
+    env:
+      PR_NUMBER: ${{ github.event.number }}
+    if: ${{ !failure() }}
+    steps:
+      - name: UPDATE ECI & RUN BUILD
+        id: run_build
+        shell: bash
+        timeout-minutes: 90
+        run: |
+          set -ex
+          pwd
+          ln -s /var/lib/elastic-service ./elastic-service
+          cd elastic-service && git pull
+          ./bin/elastic-build.sh --pr ${PR_NUMBER}
+      #          rm -rf ./elastic-service
+
+#      - name: clean ECI
+#        run: |
+#          echo ${{ steps.run_build.outputs.ECI_ID }}
+#          eci rm ${{ steps.run_build.outputs.ECI_ID }}
+
+
+
+#  clang-tidy:
+#    runs-on: self-hosted
+#    needs: be-ut
+#    env:
+#      PR_NUMBER: ${{ github.event.number }}
+#    steps:
+#      - name: pre build
+#        run: |
+#          sudo rm -rf ../starrocks/*
+#
+#      - uses: dorny/paths-filter@v2
+#        id: changes
+#        with:
+#          filters: |
+#            be:
+#            - 'be/**'
+#
+#      - uses: actions/checkout@v3
+#        with:
+#          fetch-depth: 0
+#
+#      - name: set up build
+#        run: |
+#          time scp jenkins@ci01:~/userContent/be-build-$PR_NUMBER.tar.gz .
+#          tar xzf be-build-$PR_NUMBER.tar.gz
+#          workdir=$(pwd)
+#          echo $workdir
+#          sed -i "s|\/root\/starrocks|$workdir|g" be/ut_build_ASAN/compile_commands.json
+#
+#      - uses: ZedThree/clang-tidy-review@v0.10.1
+#        id: review
+#        with:
+#          build_dir: be/build_Release
+#          config_file: .clang-tidy
+#
+#      - name: post build
+#        run: |
+#          sudo rm -rf ../starrocks/*
+#
+#  sonarcloud-be:
+#    runs-on: self-hosted
+#    needs: be-ut
+#    env:
+#      PR_NUMBER: ${{ github.event.number }}
+#    steps:
+#      - name: pre build
+#        run: |
+#          sudo rm -rf ../starrocks/*
+#
+#      - uses: dorny/paths-filter@v2
+#        id: changes
+#        with:
+#          filters: |
+#            be:
+#            - 'be/**'
+#
+#      - name: set up
+#        run: |
+#          time scp jenkins@ci01:~/userContent/be-build-$PR_NUMBER.tar.gz .
+#          tar xzf be-build-$PR_NUMBER.tar.gz
+#          workdir=$(pwd)
+#          echo $workdir
+#          sed -i "s|\/root\/starrocks|$workdir|g" be/build-wrapper/build-wrapper-dump.json
+#
+#      - name: Run sonar-scanner
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#          SONAR_TOKEN: f0fb4d25c03bae90c2e994c45c29c49dc86fc169
+#        run: |
+#          sonar-scanner -Dsonar.organization=starrocks -Dsonar.projectKey=Starrocks_be -Dsonar.cfamily.build-wrapper-output="be/build-wrapper" -Dsonar.host.url="https://sonarcloud.io" -Dsonar.sources="be/src" -Dsonar.pullrequest.key=${{ github.event.number }} -Dsonar.pullrequest.base=${{ github.base_ref }} -Dsonar.pullrequest.branch=${{ github.head_ref }} -Dsonar.projectBaseDir=. -Dsonar.pullrequest.github.repository=StarRocks/starrocks
+#
+#      - name: post build
+#        run: |
+#          sudo rm -rf ../starrocks/*
+#
+#
+
+
 #  fe-sonarcloud:
 #    runs-on: ubuntu-latest
 #    needs: fe-ut
@@ -359,6 +386,4 @@ jobs:
 #          cd thirdparty/installed/bin/ && ln -s /usr/local/bin/thrift thrift
 #          cd ${{ github.workspace }}/fe
 #          mvn -B -DskipTests verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=StarRocks_starrocks -Dsonar.pullrequest.key=${{ github.event.number }} -Dsonar.pullrequest.base=${{ github.base_ref }} -Dsonar.pullrequest.branch=${{ github.head_ref }}
-#
-#
 #
