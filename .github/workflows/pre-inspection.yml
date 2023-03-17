@@ -293,7 +293,7 @@ jobs:
         run: |
           set -x
           cd elastic-service
-          ./bin/deploy-cluster.sh --output oss://starrocks-ci-release/${{steps.branch.outputs.branch}}/Release/starrocks-b2d3607.tar.gz
+          ./bin/deploy-cluster.sh -c admit-default --output oss://starrocks-ci-release/${{steps.branch.outputs.branch}}/Release/starrocks-b2d3607.tar.gz
 #          ./bin/deploy-cluster.sh --output oss://starrocks-ci-release/${{steps.branch.outputs.branch}}/Release/${{needs.build.outputs.build_output_tar}}
 
 #  clang-tidy:
