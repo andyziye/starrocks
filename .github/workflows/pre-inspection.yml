@@ -276,8 +276,8 @@ jobs:
       - name: BRANCH INFO
         id: branch
         run: |
-          echo ${github.base_ref}
-          echo "branch=${github.base_ref}" >> $GITHUB_OUTPUT
+          echo ${{github.base_ref}}
+          echo "branch=${{github.base_ref}}" >> $GITHUB_OUTPUT
 #          echo "branch=${github.base_ref}" >> $GITHUB_OUTPUT
 
       - name: Apply for resources
