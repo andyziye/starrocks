@@ -269,30 +269,32 @@ jobs:
   deploy:
     runs-on: self-hosted
     needs: build
-    if: ${{ needs.build.result == 'success' }}
+#    if: ${{ needs.build.result == 'success' }}
     env:
       PR_NUMBER: ${{ github.event.number }}
     steps:
-      - name: BRANCH INFO
-        id: branch
-        run: |
-          echo "branch=${GITHUB_REF#refs/heads/}" >> $GITHUB_OUTPUT
-
-      - name: Apply for resources
-        id: apply_resource
-        run: |
-          set -x
-          rm -rf ./elastic-service
-          ln -s /var/lib/elastic-service ./elastic-service
-          cd elastic-service
-          git pull
-          ./bin/elastic-cluster.sh --template admit-default
-
-      - name: Deploy SR
-        run: |
-          set -x
-          cd elastic-service && git pull
-          ./bin/deploy-cluster.sh --output oss://starrocks-ci-release/${{steps.branch.outputs.branch}}/Release/starrocks-b2d3607.tar.gz
+      - test
+        run: echo ${{ needs.build.result }}
+#      - name: BRANCH INFO
+#        id: branch
+#        run: |
+#          echo "branch=${GITHUB_REF#refs/heads/}" >> $GITHUB_OUTPUT
+#
+#      - name: Apply for resources
+#        id: apply_resource
+#        run: |
+#          set -x
+#          rm -rf ./elastic-service
+#          ln -s /var/lib/elastic-service ./elastic-service
+#          cd elastic-service
+#          git pull
+#          ./bin/elastic-cluster.sh --template admit-default
+#
+#      - name: Deploy SR
+#        run: |
+#          set -x
+#          cd elastic-service && git pull
+#          ./bin/deploy-cluster.sh --output oss://starrocks-ci-release/${{steps.branch.outputs.branch}}/Release/starrocks-b2d3607.tar.gz
 #          ./bin/deploy-cluster.sh --output oss://starrocks-ci-release/${{steps.branch.outputs.branch}}/Release/${{needs.build.outputs.build_output_tar}}
 
 #  clang-tidy:
