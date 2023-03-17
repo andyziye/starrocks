@@ -287,7 +287,7 @@ jobs:
           cd elastic-service && git pull
           ./bin/elastic-cluster.sh --template admit-default
 
-      - name: deploy
+      - name: Deploy SR
         run: |
           set -x
           cd elastic-service && git pull
