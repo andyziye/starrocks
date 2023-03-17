@@ -312,8 +312,8 @@ jobs:
     env:
       PR_NUMBER: ${{ github.event.number }}
       CLUSTER_NAME: admit-default
-      FE_LIST: ${{ needs.deploy.outputs.fe }}
-      BE_LIST: ${{ needs.deploy.outputs.be }}
+      FE_NODE: ${{ needs.deploy.outputs.fe }}
+      BE_NODE: ${{ needs.deploy.outputs.be }}
     steps:
       - name: Prepare Case
         run: |
@@ -326,12 +326,12 @@ jobs:
           cd elastic-service && git pull
           
           cd ${{ github.workspace }}
-          rm -rf ./StarRocksTest && cp /var/lib/StarRocksTest ./StarRocksTest
+          rm -rf ./StarRocksTest && cp -rf /var/lib/StarRocksTest ./StarRocksTest
           cd ./StarRocksTest
-          git reset --hard && git pull
           
           cd ${{ github.workspace }}/elastic-service
           ./bin/run-admit.sh
+#          git reset --hard && git pull
 
       - name: RUN
         run: |
