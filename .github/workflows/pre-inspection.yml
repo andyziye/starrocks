@@ -124,9 +124,11 @@ jobs:
     env:
       PR_NUMBER: ${{ github.event.number }}
     steps:
-      - name: Extract branch
+      - name: BRANCH INFO
         id: extract_branch
-        run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
+        run: |
+          echo "branch=${GITHUB_REF#refs/heads/}" >> $GITHUB_OUTPUT
+#          echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
 
       - name: UPDATE ECI & RUN UT
         id: run_ut
@@ -216,7 +218,7 @@ jobs:
         run: |
           echo "FE UT..."
 
-      - name: Extract branch
+      - name: BRANCH INFO
         id: extract_branch
         run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
 
@@ -264,7 +266,24 @@ jobs:
           echo ${{ steps.run_build.outputs.ECI_ID }}
           eci rm ${{ steps.run_build.outputs.ECI_ID }}
 
+  deploy:
+    runs-on: self-hosted
+    needs: [ build ]
+    env:
+      PR_NUMBER: ${{ github.event.number }}
+    steps:
+      - name: BRANCH INFO
+        id: branch
+        run: |
+          echo "branch=${GITHUB_REF#refs/heads/}" >> $GITHUB_OUTPUT
 
+      - name: deploy
+        run: |
+          set -x
+          rm -rf ./elastic-service
+          ln -s /var/lib/elastic-service ./elastic-service
+          cd elastic-service && git pull
+          ./bin/deploy-cluster.sh --output oss://starrocks-ci-release/${{steps.branch.outputs.branch}}/Release/${{needs.build.outputs.build_output_tar}}
 
 #  clang-tidy:
 #    runs-on: self-hosted
