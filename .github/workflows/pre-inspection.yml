@@ -292,8 +292,8 @@ jobs:
         run: |
           set -x
           cd elastic-service && git pull
-#          ./bin/deploy-cluster.sh --output oss://starrocks-ci-release/${{steps.branch.outputs.branch}}/Release/${{needs.build.outputs.build_output_tar}}
           ./bin/deploy-cluster.sh --output oss://starrocks-ci-release/${{steps.branch.outputs.branch}}/Release/starrocks-b2d3607.tar.gz
+#          ./bin/deploy-cluster.sh --output oss://starrocks-ci-release/${{steps.branch.outputs.branch}}/Release/${{needs.build.outputs.build_output_tar}}
 
 #  clang-tidy:
 #    runs-on: self-hosted
