@@ -268,7 +268,7 @@ jobs:
 
   deploy:
     runs-on: self-hosted
-    if: needs.build.result != '1'
+    if: always() && needs.build.result == 'success'
     needs: build
     env:
       PR_NUMBER: ${{ github.event.number }}
