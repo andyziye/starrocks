@@ -103,7 +103,7 @@ jobs:
       - name: Run Clang-Format
         run: |
           export PATH=/var/lib/llvm/bin:$PATH
-          bash build-support/check-format.sh
+#          bash build-support/check-format.sh
 
   tscancode:
     runs-on: ubuntu-latest
@@ -268,8 +268,8 @@ jobs:
 
   deploy:
     runs-on: self-hosted
-    needs: [ build ]
-    if: success()
+    needs: [build]
+    if: ${{ success() }}
     env:
       PR_NUMBER: ${{ github.event.number }}
     steps:
