@@ -268,8 +268,8 @@ jobs:
 
   deploy:
     runs-on: self-hosted
+    if: needs.build.result != '1'
     needs: build
-    if: ${{ needs.build.outputs.build_output_tar != '1' }}
     env:
       PR_NUMBER: ${{ github.event.number }}
     steps:
