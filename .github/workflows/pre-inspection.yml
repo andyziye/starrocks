@@ -272,7 +272,7 @@ jobs:
     env:
       PR_NUMBER: ${{ github.event.number }}
     steps:
-      - test
+      - name: test
         run: echo ${{ needs.build.result }}
 
 #    if: ${{ needs.build.result == 'success' }}
