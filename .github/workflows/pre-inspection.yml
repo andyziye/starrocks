@@ -283,15 +283,14 @@ jobs:
         run: |
           set -x
           rm -rf ./elastic-service
-          ln -s /var/lib/elastic-service ./elastic-service
-          cd elastic-service
-          git pull
+          cp -rf /var/lib/elastic-service ./elastic-service
+          cd elastic-service && git pull
           ./bin/elastic-cluster.sh --template admit-default
 
       - name: Deploy SR
         run: |
           set -x
-          cd elastic-service && git pull
+          cd elastic-service
           ./bin/deploy-cluster.sh --output oss://starrocks-ci-release/${{steps.branch.outputs.branch}}/Release/starrocks-b2d3607.tar.gz
 #          ./bin/deploy-cluster.sh --output oss://starrocks-ci-release/${{steps.branch.outputs.branch}}/Release/${{needs.build.outputs.build_output_tar}}
 
