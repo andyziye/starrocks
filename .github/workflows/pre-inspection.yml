@@ -269,7 +269,7 @@ jobs:
   deploy:
     runs-on: self-hosted
     needs: build
-    if: ${{ success() }}
+    if: ${{ needs.build.result == 'success' }}
     env:
       PR_NUMBER: ${{ github.event.number }}
     steps:
