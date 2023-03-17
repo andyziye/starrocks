@@ -269,12 +269,15 @@ jobs:
   deploy:
     runs-on: self-hosted
     needs: build
-#    if: ${{ needs.build.result == 'success' }}
     env:
       PR_NUMBER: ${{ github.event.number }}
     steps:
       - test
         run: echo ${{ needs.build.result }}
+
+#    if: ${{ needs.build.result == 'success' }}
+
+
 #      - name: BRANCH INFO
 #        id: branch
 #        run: |
