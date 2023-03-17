@@ -276,8 +276,9 @@ jobs:
       - name: BRANCH INFO
         id: branch
         run: |
-          echo ${GITHUB_REF#refs/heads/}
-          echo "branch=${GITHUB_REF#refs/heads/}" >> $GITHUB_OUTPUT
+          echo ${github.base_ref}
+          echo "branch=${github.base_ref}" >> $GITHUB_OUTPUT
+#          echo "branch=${github.base_ref}" >> $GITHUB_OUTPUT
 
       - name: Apply for resources
         id: apply_resource
@@ -286,7 +287,7 @@ jobs:
           rm -rf ./elastic-service
           cp -rf /var/lib/elastic-service ./elastic-service
           cd elastic-service && git pull
-          ./bin/elastic-cluster.sh --template admit-default
+#          ./bin/elastic-cluster.sh --template admit-default
 
       - name: Deploy SR
         run: |
