@@ -269,7 +269,7 @@ jobs:
   deploy:
     runs-on: self-hosted
     needs: build
-    if: ${{ needs.build.result == null }}
+    if: ${{ needs.build.outputs.build_output_tar != "1" }}
     env:
       PR_NUMBER: ${{ github.event.number }}
     steps:
@@ -277,6 +277,7 @@ jobs:
         run: echo ${{ needs.build.result }}
 
 
+#    if: ${{ needs.build.result != null }}
 
 #      - name: BRANCH INFO
 #        id: branch
