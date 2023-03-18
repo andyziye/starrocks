@@ -60,11 +60,10 @@ jobs:
           cp -rf /var/lib/StarRocksTest ./StarRocksTest
 
       - name: Publish Test Results
-        uses: EnricoMi/publish-unit-test-result-action@v2
-        if: always()
+        uses: mikepenz/action-junit-report@v3
+        if: success() || failure()
         with:
-          files: |
-            StarRocksTest/result/*.xml
+          report_paths: 'StarRocksTest/result/*.xml'
 
 
 #      - name: TEST INFO
