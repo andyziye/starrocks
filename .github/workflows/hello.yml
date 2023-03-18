@@ -7,14 +7,14 @@ on:
       - reopened
       - synchronize
 concurrency:
-  group: ${{ github.head_ref }}
+  group: ${{ github.event.number }}
   cancel-in-progress: true
 
 jobs:
   job1:
     runs-on: ubuntu-latest
     steps:
-      - run: echo ${{ github.head_ref }}
+      - run: echo ${{ github.event.number }}
       - run: echo a
       - run: echo b
 
