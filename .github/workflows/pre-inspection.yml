@@ -355,7 +355,8 @@ jobs:
         if: success() || failure()
         with:
           check_name: 'Test Results'
-          detailed_summary: true
+          detailed_summary: 'true'
+          fail_on_failure: 'true'
           report_paths: 'StarRocksTest/result/*.xml'
 
 
