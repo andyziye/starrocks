@@ -1,4 +1,4 @@
-name: PRE INSPECTION
+name: CI PIPELINE
 
 on:
   pull_request:
@@ -8,23 +8,26 @@ on:
       - synchronize
 
     paths:
-      - 'docs/**'
-      - 'be/**'
-      - 'fe/**.java'
-      - 'fe/**.xml'
+      - 'hello world'
 
-  push:
-    #  pull_request_target:
-    types:
-      - opened
-      - reopened
-      - synchronize
-
-    paths:
-      - 'docs/**'
-      - 'be/**'
-      - 'fe/**.java'
-      - 'fe/**.xml'
+#    paths:
+#      - 'docs/**'
+#      - 'be/**'
+#      - 'fe/**.java'
+#      - 'fe/**.xml'
+#
+#  push:
+#    #  pull_request_target:
+#    types:
+#      - opened
+#      - reopened
+#      - synchronize
+#
+#    paths:
+#      - 'docs/**'
+#      - 'be/**'
+#      - 'fe/**.java'
+#      - 'fe/**.xml'
 
 jobs:
   doc-checker:
@@ -243,6 +246,7 @@ jobs:
   build:
     runs-on: self-hosted
     needs: [be-ut, fe-ut]
+    name: BUILD
     env:
       PR_NUMBER: ${{ github.event.number }}
     outputs:
@@ -275,6 +279,7 @@ jobs:
     runs-on: self-hosted
     if: always() && needs.build.result == 'success'
     needs: build
+    name: DEPLOY SR
     env:
       PR_NUMBER: ${{ github.event.number }}
       CLUSTER_NAME: admit-default
@@ -306,7 +311,7 @@ jobs:
         run: |
           set -x
           cd elastic-service
-          ./bin/deploy-cluster.sh -c ${CLUSTER_NAME} --output oss://starrocks-ci-release/${{steps.branch.outputs.branch}}/Release/${{needs.build.outputs.build_output_tar}}
+          ./bin/deploy-cluster.sh -c ${CLUSTER_NAME} --output oss://starrocks-ci-release/${{steps.branch.outputs.branch}}/Release/pr/${{needs.build.outputs.build_output_tar}}
 #          ./bin/deploy-cluster.sh -c admit-default --output oss://starrocks-ci-release/${{steps.branch.outputs.branch}}/Release/starrocks-b2d3607.tar.gz
 
       - run: |
