@@ -21,5 +21,5 @@ jobs:
   job2:
     needs: job1
     steps:
-      - run: sleep 301
+      - run: sleep 302
 
