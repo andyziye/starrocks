@@ -70,7 +70,7 @@ jobs:
         with:
           name: JEST Tests
           path: StarRocksTest/result/*.xml
-          reporter: jest-junit
+          reporter: java-junit
 
 #      - name: TEST INFO
 #        id: test01
