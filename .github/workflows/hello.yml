@@ -19,8 +19,8 @@ jobs:
       - run: echo b
 
   job2:
-    needs: job1
     runs-on: ubuntu-latest
+    needs: job1
     steps:
       - run: sleep 302
 
