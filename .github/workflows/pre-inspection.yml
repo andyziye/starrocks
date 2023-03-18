@@ -96,6 +96,9 @@ jobs:
     needs: be-checker
     if: ${{ needs.be-checker.outputs.output1 == 'true' }}
     steps:
+      - name: Clean Workspace
+          uses: AutoModality/action-clean@v1.1.0
+
       - name: Checkout Code
         uses: actions/checkout@v3
         with:
@@ -214,9 +217,8 @@ jobs:
     env:
       PR_NUMBER: ${{ github.event.number }}
     steps:
-      - name: RUN
-        run: |
-          echo "FE UT..."
+      - name: Clean Workspace
+          uses: AutoModality/action-clean@v1.1.0
 
       - name: BRANCH INFO
         id: extract_branch
@@ -247,6 +249,9 @@ jobs:
       build_output_tar: ${{ steps.run_build.outputs.OUTPUT_TAR }}
     if: always() && (needs.be-ut.result == 'success' || needs.fe-ut.result == 'success')
     steps:
+      - name: Clean Workspace
+          uses: AutoModality/action-clean@v1.1.0
+
       - name: UPDATE ECI & RUN BUILD
         id: run_build
         shell: bash
@@ -277,6 +282,9 @@ jobs:
       fe: ${{steps.deploy_sr.outputs.fe}}
       be: ${{steps.deploy_sr.outputs.be}}
     steps:
+      - name: Clean Workspace
+        uses: AutoModality/action-clean@v1.1.0
+
       - name: BRANCH INFO
         id: branch
         run: |
@@ -315,6 +323,9 @@ jobs:
       FE_NODE: ${{ needs.deploy.outputs.fe }}
       BE_NODE: ${{ needs.deploy.outputs.be }}
     steps:
+      - name: Clean Workspace
+          uses: AutoModality/action-clean@v1.1.0
+
       - name: Prepare Case
         run: |
           set -x
