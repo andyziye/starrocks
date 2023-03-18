@@ -49,10 +49,7 @@ jobs:
     outputs:
       output1: ${{ steps.test01.outputs.test01 }}
     permissions:
-      contents: read
-      issues: read
       checks: write
-      pull-requests: write
     steps:
       - name: report
         run: |
@@ -63,8 +60,17 @@ jobs:
         uses: mikepenz/action-junit-report@v3
         if: success() || failure()
         with:
+          check_name: 'Test Results'
+          detailed_summary: true
           report_paths: 'StarRocksTest/result/*.xml'
 
+      - name: Test Report
+        uses: dorny/test-reporter@v1
+        if: success() || failure()
+        with:
+          name: JEST Tests
+          path: StarRocksTest/result/*.xml
+          reporter: jest-junit
 
 #      - name: TEST INFO
 #        id: test01

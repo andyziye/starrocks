@@ -322,6 +322,7 @@ jobs:
     name: ADMIT TEST
     needs: deploy
     if: always() && needs.deploy.result == 'success'
+    timeout-minutes: 60
     env:
       PR_NUMBER: ${{ github.event.number }}
       CLUSTER_NAME: admit-default
@@ -348,12 +349,6 @@ jobs:
           cd ${{ github.workspace }}/elastic-service
           ./bin/run-admit.sh
 #          git reset --hard && git pull
-
-      - name: RUN
-        run: |
-          set -x
-          cd ./StarRocksTest
-          
 
 
 #  clang-tidy:
