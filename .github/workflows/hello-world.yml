@@ -48,6 +48,11 @@ jobs:
     runs-on:  self-hosted
     outputs:
       output1: ${{ steps.test01.outputs.test01 }}
+    permissions:
+      contents: read
+      issues: read
+      checks: write
+      pull-requests: write
     steps:
       - name: report
         run: |
