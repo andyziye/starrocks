@@ -1,0 +1,25 @@
+name: CONTENT CHECKER
+
+on:
+  pull_request_target:
+    types:
+      - opened
+      - reopened
+      - synchronize
+concurrency:
+  group: ${{ github.head_ref }}
+  cancel-in-progress: true
+
+jobs:
+  job1:
+    runs-on: self-hosted
+    steps:
+      - run: echo ${{ github.head_ref }}
+      - run: echo a
+      - run: echo b
+
+  job2:
+    needs: job1
+    steps:
+      - run: sleep 300
+

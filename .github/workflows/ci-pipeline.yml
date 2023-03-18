@@ -13,17 +13,8 @@ on:
       - 'fe/**.java'
       - 'fe/**.xml'
 
-  push:
-    types:
-      - opened
-      - reopened
-      - synchronize
-
-    paths:
-      - 'docs/**'
-      - 'be/**'
-      - 'fe/**.java'
-      - 'fe/**.xml'
+    branches:
+      - main
 
 jobs:
   doc-checker:
