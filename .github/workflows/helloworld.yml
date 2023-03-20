@@ -28,13 +28,17 @@ jobs:
           echo ECI_LIST=${{env.ECI_LIST}}${this_var} >> $GITHUB_ENV
           echo ECI_LIST=${{ env.ECI_LIST }}${this_var} >> $GITHUB_ENV
           echo "ECI_LIST=${{ env.ECI_LIST }}${this_var}" >> $GITHUB_ENV
-          echo "job1" 
+          echo "job1"
+      - run: |
+          echo ${{env.ECI_LIST}}
 
   job2:
     runs-on: ubuntu-latest
     name: job2
     needs: job1
     steps:
+      - run: |
+          echo ${{env.ECI_LIST}}
       - name: sleep 301
         run: |
           set -x
