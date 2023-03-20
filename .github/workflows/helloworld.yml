@@ -17,20 +17,33 @@ env:
   ECI_LIST: C
 
 jobs:
+#  prepare:
+#    runs-on: ubuntu-latest
+#    steps:
+#      - echo "" > eci.txt
+#
+#      - name: 'Upload Artifact'
+#        uses: actions/upload-artifact@v3
+#        with:
+#          name: eci-list
+#          path: eci.txt
+#          retention-days: 1
+
   job1:
     runs-on: ubuntu-latest
     name: job1
 
     steps:
-      - run: |
+      - name: echos
+        id: echos
+        run: |
           set -x
           this_var=A
-          echo ECI_LIST=${{env.ECI_LIST}}${this_var} >> $GITHUB_ENV
-          echo ECI_LIST=${{ env.ECI_LIST }}${this_var} >> $GITHUB_ENV
-          echo "ECI_LIST=${{ env.ECI_LIST }}${this_var}" >> $GITHUB_ENV
-          echo "job1"
-      - run: |
-          echo ${{env.ECI_LIST}}
+          echos "job1"
+      - name: clean
+        if: always()
+        run: |
+          echo clean
 
   job2:
     runs-on: ubuntu-latest
