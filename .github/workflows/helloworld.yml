@@ -30,9 +30,9 @@ jobs:
 
   job3:
     runs-on: ubuntu-latest
-      name: job3
-      needs: job2
-      if: always()
-      steps:
-        - run: echo "clean..."
+    name: job3
+    needs: job2
+    if: always()
+    steps:
+      - run: echo "clean..."
 
