@@ -14,7 +14,7 @@ permissions:
   checks: write
 
 env:
-  ECI_LIST:
+  ECI_LIST: C
 
 jobs:
   job1:
