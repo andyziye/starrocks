@@ -1,4 +1,5 @@
 name: pull request comment
+
 on:
   pull_request:
     types: [edited]
@@ -10,14 +11,16 @@ on:
       - dismissed
 
   pull_request_review:
-    - submitted
-    - edited
-    - dismissed
+    types:
+      - submitted
+      - edited
+      - dismissed
 
   pull_request_review_comment:
-    - submitted
-    - edited
-    - dismissed
+    types:
+      - submitted
+      - edited
+      - dismissed
 
 
 jobs:
