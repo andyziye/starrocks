@@ -13,12 +13,19 @@ concurrency:
 permissions:
   checks: write
 
+env:
+  ECI_LIST=
+
 jobs:
   job1:
     runs-on: ubuntu-latest
     name: job1
+
     steps:
-      - run: echo "job1"
+      - run: |
+          this_var=A
+          ECI_LIST=${ECI_LIST},${this_var}
+          echo "job1" 
 
   job2:
     runs-on: ubuntu-latest
@@ -26,7 +33,10 @@ jobs:
     needs: job1
     steps:
       - name: sleep 301
-        run: sleep 301
+        run: |
+          this_var=B
+          ECI_LIST=${ECI_LIST},${this_var}
+          sleep 301
 
   job3:
     runs-on: ubuntu-latest
@@ -34,4 +44,6 @@ jobs:
     needs: job2
     if: always()
     steps:
-      - run: echo "clean..."
+      - run: |
+          echo "clean..."
+          echo ${ECI_LIST}
