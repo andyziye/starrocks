@@ -35,9 +35,10 @@ jobs:
     steps:
       - name: sleep 301
         run: |
+          set -x
           this_var=B
           echo "ECI_LIST=${{env.ECI_LIST}}${this_var}" >> $GITHUB_ENV
-          sleep 101
+#          sleep 101
 
   job3:
     runs-on: ubuntu-latest
