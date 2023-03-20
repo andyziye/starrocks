@@ -10,10 +10,6 @@ on:
   issue_comment:
     types: [ created ]
 
-concurrency:
-  group: ${{ github.event.number }}
-  cancel-in-progress: true
-
 jobs:
   job1:
     runs-on: ubuntu-latest
