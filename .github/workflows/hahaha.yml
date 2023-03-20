@@ -1,12 +1,7 @@
 name: pull request comment
 
 on:
-  issues:
-    types: [ opened, edited ]
-    issue_comment:
-      types: [ created, edited ]
-    pull_request:
-      types: [ assigned, opened, synchronize, edited ]
+  commit_comment
 
 jobs:
   job1:
