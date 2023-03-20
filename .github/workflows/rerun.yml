@@ -21,13 +21,11 @@ jobs:
           reaction: rocket
         env:
           GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
-      - run: |
-          echo ${{ steps.check.outputs.triggered }}
-          echo ${{ steps.check.outputs.comment_body }}
+
       - name: Rerun
         if: |
-          [[ ${{ steps.check.outputs.triggered }} == 'true' ]] && \
-          [[ `echo ${{ steps.check.outputs.comment_body }}` == 'rerun' ]]
+          "${{ steps.check.outputs.triggered }}" == 'true' && 
+          `echo "${{ steps.check.outputs.comment_body }}"` == 'rerun'
         run: |
           set -x
           curl -L \
