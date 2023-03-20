@@ -14,7 +14,7 @@ permissions:
   checks: write
 
 env:
-  ECI_LIST=
+  ECI_LIST:
 
 jobs:
   job1:
@@ -36,12 +36,23 @@ jobs:
         run: |
           this_var=B
           ECI_LIST=${ECI_LIST},${this_var}
-          sleep 301
+          echo job2
 
   job3:
     runs-on: ubuntu-latest
     name: job3
     needs: job2
+    steps:
+      - name: sleep 301
+        run: |
+          this_var=C
+          ECI_LIST=${ECI_LIST},${this_var}
+          sleep 301
+
+  job4:
+    runs-on: ubuntu-latest
+    name: job4
+    needs: job3
     if: always()
     steps:
       - run: |
