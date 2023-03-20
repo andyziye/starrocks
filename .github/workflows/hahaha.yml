@@ -1,22 +1,25 @@
 name: pull request comment
 on:
-  pull_request_review:
+  pull_request:
     types:
-      - submitted
       - edited
 
 jobs:
   job1:
     runs-on: ubuntu-latest
     steps:
-      - uses: khan/pull-request-comment-trigger@v1.1.0
-        id: check
+      - name: Find Comment
+        uses: peter-evans/find-comment@v2
+        id: fc
         with:
-          trigger: '@deploy'
-          reaction: rocket
-        env:
-          GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
-      - run: echo "${{ steps.check.outputs.comment_body }}"
+          issue-number: ${{ github.event.number }}
+          body-includes: search string 1
+      - run: |
+          set -x
+          echo ${{ steps.fc.outputs.comment-id }}
+          echo ${{ steps.fc.outputs.comment-body }}
+          echo ${{ steps.fc.outputs.comment-author }}
+          echo ${{ steps.fc.outputs.comment-created-at }}
 #      - name: Rerun
 #        if: |
 #          "${{ steps.check.outputs.triggered }}" == 'true' &&
