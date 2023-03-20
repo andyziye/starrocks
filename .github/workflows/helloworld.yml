@@ -25,7 +25,7 @@ jobs:
       - run: |
           set -x
           this_var=A
-          echo "ECI_LIST=${ECI_LIST}${this_var}" >> $GITHUB_ENV
+          echo "ECI_LIST=${{env.ECI_LIST}}${this_var}" >> $GITHUB_ENV
           echo "job1" 
 
   job2:
@@ -36,7 +36,7 @@ jobs:
       - name: sleep 301
         run: |
           this_var=B
-          echo "ECI_LIST=${ECI_LIST}${this_var}" >> $GITHUB_ENV
+          echo "ECI_LIST=${{env.ECI_LIST}}${this_var}" >> $GITHUB_ENV
           sleep 101
 
   job3:
@@ -47,7 +47,7 @@ jobs:
       - name: sleep 302
         run: |
           this_var=C
-          echo "ECI_LIST=${ECI_LIST}${this_var}" >> $GITHUB_ENV
+          echo "ECI_LIST=${{env.ECI_LIST}}${this_var}" >> $GITHUB_ENV
           echo job3
 
   job4:
@@ -58,4 +58,4 @@ jobs:
     steps:
       - run: |
           echo "clean..."
-          echo ${ECI_LIST}
+          echo ${{env.ECI_LIST}}
