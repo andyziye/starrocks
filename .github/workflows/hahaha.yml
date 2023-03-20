@@ -1,27 +1,12 @@
 name: pull request comment
 
 on:
-  pull_request:
-    types: [edited]
-
-  issue_comment:
-    types:
-      - created
-      - edited
-      - deleted
-
-  pull_request_review:
-    types:
-      - submitted
-      - edited
-      - dismissed
-
-  pull_request_review_comment:
-    types:
-      - submitted
-      - edited
-      - dismissed
-
+  issues:
+    types: [ opened, edited ]
+    issue_comment:
+      types: [ created, edited ]
+    pull_request:
+      types: [ assigned, opened, synchronize, edited ]
 
 jobs:
   job1:
