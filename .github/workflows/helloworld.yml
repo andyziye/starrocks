@@ -39,6 +39,8 @@ jobs:
         run: |
           set -x
           this_var=B
+          echo ECI_LIST=${{env.ECI_LIST}}${this_var} >> $GITHUB_ENV
+          echo ECI_LIST=${{ env.ECI_LIST }}${this_var} >> $GITHUB_ENV
           echo "ECI_LIST=${{ env.ECI_LIST }}${this_var}" >> $GITHUB_ENV
 #          sleep 101
 
