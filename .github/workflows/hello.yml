@@ -19,5 +19,5 @@ jobs:
     runs-on: ubuntu-latest
     needs: job1
     steps:
-      - run: sleep 304
+      - run: sleep 302
 
