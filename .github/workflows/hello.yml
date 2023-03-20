@@ -6,6 +6,7 @@ on:
       - opened
       - reopened
       - synchronize
+
 concurrency:
   group: ${{ github.event.number }}
   cancel-in-progress: true
