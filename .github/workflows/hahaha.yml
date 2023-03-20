@@ -1,7 +1,8 @@
 name: pull request comment
 
 on:
-  commit_comment
+  pull_request:
+    types: commit_comment
 
 jobs:
   job1:
