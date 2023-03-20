@@ -46,7 +46,9 @@ jobs:
     steps:
       - name: sleep 302
         run: |
+          set -x
           this_var=C
+          echo ${{env.ECI_LIST}}
           echo "ECI_LIST=${{env.ECI_LIST}}${this_var}" >> $GITHUB_ENV
           echo job3
 
