@@ -23,8 +23,9 @@ jobs:
 
     steps:
       - run: |
+          set -x
           this_var=A
-          ECI_LIST=${ECI_LIST},${this_var}
+          echo "ECI_LIST=${ECI_LIST}${this_var}" >> $GITHUB_ENV
           echo "job1" 
 
   job2:
@@ -35,8 +36,8 @@ jobs:
       - name: sleep 301
         run: |
           this_var=B
-          ECI_LIST=${ECI_LIST},${this_var}
-          sleeps 1
+          echo "ECI_LIST=${ECI_LIST}${this_var}" >> $GITHUB_ENV
+          sleep 100
 
   job3:
     runs-on: ubuntu-latest
@@ -46,7 +47,7 @@ jobs:
       - name: sleep 302
         run: |
           this_var=C
-          ECI_LIST=${ECI_LIST},${this_var}
+          echo "ECI_LIST=${ECI_LIST}${this_var}" >> $GITHUB_ENV
           echo job3
 
   job4:
