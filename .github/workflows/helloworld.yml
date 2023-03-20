@@ -1,0 +1,37 @@
+name: HELLO
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+
+concurrency:
+  group: ${{ github.event.number }}
+  cancel-in-progress: true
+
+permissions:
+  checks: write
+
+jobs:
+  job1:
+    runs-on: ubuntu-latest
+    name: job1
+    steps:
+      - run: echo "job1"
+
+  job2:
+    runs-on: ubuntu-latest
+    name: job2
+    needs: job1
+    steps:
+      - name: sleep 300
+        run: sleep 300
+
+  job3:
+    runs-on: ubuntu-latest
+    name: job3
+    needs: job2
+    if: always()
+    steps:
+      - run: echo "clean..."
