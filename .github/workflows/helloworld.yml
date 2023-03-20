@@ -43,7 +43,7 @@ jobs:
     name: job3
     needs: job2
     steps:
-      - name: sleep 301
+      - name: sleep 302
         run: |
           this_var=C
           ECI_LIST=${ECI_LIST},${this_var}
