@@ -1,6 +1,7 @@
-name: AAA
-
-on: issue_comment
+name: pull request comment
+on:
+  issue_comment:
+    types: [created, edited, deleted]
 
 jobs:
   job1:
