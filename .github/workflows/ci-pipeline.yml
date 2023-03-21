@@ -7,7 +7,7 @@ on:
       - synchronize
 
     branches:
-      - main
+      - tmp_target
 
 concurrency:
   group: ${{ github.event.number }}
