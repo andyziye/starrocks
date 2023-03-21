@@ -143,7 +143,6 @@ jobs:
           set -x
           echo 1
           echo ${{secrets.PAT}}
-          echo ${{secrets.SONAR_TOKEN}}
           echo ${{secrets.GITHUB_TOKEN}}
           cd ${{ github.workspace }}
           echo -------
@@ -160,7 +159,7 @@ jobs:
           check_name: 'XML Test'
           detailed_summary: true
           token: ${{secrets.PAT}}
-#          github_token: ${{ secrets.GITHUB_TOKEN }}
+          fail_on_failure: true
           report_paths: 'StarRocksTest/result/*.xml'
 
   fe-checker:
