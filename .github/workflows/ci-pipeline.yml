@@ -9,6 +9,14 @@ on:
     branches:
       - tmp_target
 
+  push:
+    types:
+      - opened
+      - synchronize
+
+    branches:
+      - tmp_target
+
 concurrency:
   group: ${{ github.event.number }}
   cancel-in-progress: true

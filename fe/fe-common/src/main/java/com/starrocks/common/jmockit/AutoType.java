@@ -11,7 +11,7 @@ import java.util.Map;
 
 /**
  * Helper class to convert type between Java's wrapper type and primitive typess
- * There are 8 wrapper/primitive types in Java:
+ * There are 8 wrapper/primitive types in Java:ss
  * |Wrapped Type         |Primitive Type
  * --------------------------------------
  * |Boolean              |boolean
