@@ -166,7 +166,7 @@ jobs:
         with:
           check_name: 'XML Test'
           detailed_summary: true
-          token: ${{ secrets.PAT3 }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           fail_on_failure: true
           report_paths: 'StarRocksTest/result/*.xml'
 
