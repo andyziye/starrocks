@@ -141,6 +141,7 @@ jobs:
       - name: Run Case
         run: |
           set -x
+          echo 1
           echo ${{secrets.PAT}}
           echo ${{secrets.SONAR_TOKEN}}
           echo ${{secrets.GITHUB_TOKEN}}
