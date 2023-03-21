@@ -1,7 +1,15 @@
 name: CI PIPELINE
 
 on:
-  pull_request_target:
+  #  pull_request_target:
+  #    types:
+  #      - opened
+  #      - synchronize
+  #
+  #    branches:
+  #      - tmp_target
+
+  pull_request:
     types:
       - opened
       - synchronize
@@ -97,10 +105,6 @@ jobs:
           fetch-depth: 0
       - name: Run Clang-Format
         run: |
-          set -x
-          echo ${{ github.event.number }}
-          echo ${{ github.head_ref }}
-          echo ${{ github.base_ref }}
           export PATH=/var/lib/llvm/bin:$PATH
           bash build-support/check-format.sh
 
@@ -147,9 +151,12 @@ jobs:
           set -x
           echo 1
           echo ${{secrets.PAT}}
-          echo ${{secrets.SONAR_TOKEN}}
           echo ${{secrets.GITHUB_TOKEN}}
           cd ${{ github.workspace }}
+          echo -------
+          echo ${{ github.event.number }}
+          echo ${{ github.head_ref }}
+          echo ${{ github.base_ref }}
           mkdir test && cd test
           cp /var/local/env/test_window_funnel_py_TestWindowFunnel_test_window_funnel_date.xml .
 
@@ -159,8 +166,8 @@ jobs:
         with:
           check_name: 'XML Test'
           detailed_summary: true
-          token: ${{secrets.PAT}}
-#          github_token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fail_on_failure: true
           report_paths: 'StarRocksTest/result/*.xml'
 
   fe-checker:
@@ -190,7 +197,7 @@ jobs:
   fe-codestyle-check:
     runs-on: ubuntu-latest
     needs: fe-checker
-    if: needs.fe-checker.outputs.output1 != 'true'
+    if: needs.fe-checker.outputs.output1 == 'true'
     name: FE Code Style Check
     steps:
       - uses: dorny/paths-filter@v2
@@ -252,10 +259,10 @@ jobs:
           cd elastic-service && git pull
           ./bin/elastic-ut.sh --pr ${PR_NUMBER} --module fe
 
-#      - name: upload report
-#        with:
-#          name: FE-UT-REPORT
-#          path: cd elastic-service/ # or path/to/artifact
+      #      - name: upload report
+      #        with:
+      #          name: FE-UT-REPORT
+      #          path: cd elastic-service/ # or path/to/artifact
 
       - name: clean ECI
         if: always()
@@ -376,5 +383,5 @@ jobs:
           check_name: 'Admit Test Results'
           detailed_summary: true
           token: ${{ secrets.GITHUB_TOKEN }}
-#          github_token: ${{ secrets.PAT }}
+          #          github_token: ${{ secrets.PAT }}
           report_paths: 'StarRocksTest/result/*.xml'
