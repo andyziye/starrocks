@@ -1,13 +1,13 @@
 name: CI PIPELINE
 
 on:
-  pull_request_target:
-    types:
-      - opened
-      - synchronize
-
-    branches:
-      - tmp_target
+#  pull_request_target:
+#    types:
+#      - opened
+#      - synchronize
+#
+#    branches:
+#      - tmp_target
 
   pull_request:
     types:
@@ -166,7 +166,7 @@ jobs:
         with:
           check_name: 'XML Test'
           detailed_summary: true
-          token: ${{secrets.PAT}}
+          token: ${{ secrets.PAT3 }}
           fail_on_failure: true
           report_paths: 'StarRocksTest/result/*.xml'
 
