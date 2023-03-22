@@ -43,4 +43,4 @@ jobs:
           submodules: recursive
           
       - name: test
-        runs: echo A
+        run: echo A
