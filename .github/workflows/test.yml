@@ -31,3 +31,4 @@ jobs:
         with:
           name: TEST FILE
           path: ./1.txt
+          retention-days: 1
