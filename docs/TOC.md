@@ -2,7 +2,7 @@
 
 ## Index
 
-+ [StarRocks](./introduction/StarRocks_intro.md)
++ [StarRocks](./introduction/StarRocks_intro.md)s
 + Introduction to StarRocks
   + [What is StarRocks?](./introduction/what_is_starrocks.md)
   + [Architecture](./introduction/Architecture.md)
