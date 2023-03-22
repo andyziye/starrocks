@@ -32,3 +32,15 @@ jobs:
           name: TEST FILE
           path: ./1.txt
           retention-days: 1
+          
+  job2:
+    runs-on: self-hosted
+    steps:
+      - name: "Checkout ${{ github.ref }} ( ${{ github.sha }} )"
+        uses: actions/checkout@v3
+        with:
+          persist-credentials: false
+          submodules: recursive
+          
+      - name: test
+        runs: echo A
