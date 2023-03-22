@@ -1,0 +1,33 @@
+name: TEST upload
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+
+permissions:
+  checks: write
+  actions: write
+  contents: write
+  deployments: write
+  discussions: write
+  issues: write
+  packages: write
+  pages: write
+  pull-requests: write
+  repository-projects: write
+  security-events: write
+  statuses: write
+
+jobs:
+  job1:
+    runs-on: self-hosted
+    name: job1
+    steps:
+      - run: echo 1 > 1.txt
+      - run: echo 2 >> 1.txt
+      - uses: actions/upload-artifact@v3
+        with:
+          name: TEST FILE
+          path: ./1.txt
