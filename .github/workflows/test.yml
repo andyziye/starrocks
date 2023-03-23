@@ -29,11 +29,11 @@ jobs:
 
   job2:
     runs-on: ubuntu-latest
-      if: ${{ !success() }}
-      needs: job1
-      name: job2
-      steps:
-        - run: echo 1
+    if: ${{ !success() }}
+    needs: job1
+    name: job2
+    steps:
+      - run: echo 1
 
   job3:
     runs-on: ubuntu-latest
