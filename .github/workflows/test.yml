@@ -53,9 +53,9 @@ jobs:
           git merge --squash --no-edit ${BRANCH} || (echo "Merge conflict, please check." && exit -1);
 
       - name: pwd
-        - run: |
-            pwd
-            ls
+        run: |
+          pwd
+          ls
 
       - name: Run
         uses: DoozyX/clang-format-lint-action@v0.14
