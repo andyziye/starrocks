@@ -23,7 +23,6 @@ permissions:
 jobs:
   clang-format:
     runs-on: self-hosted
-    needs: be-checker
     name: Clang-Format
     env:
       PR_NUMBER: ${{ github.event.number }}
