@@ -204,7 +204,7 @@ void AgentServer::Impl::init_or_die() {
                                        _thread_pool_drop_auto_increment_map);
 
 #ifndef BE_TEST
-        // Currently FE can have at most num_of_storage_path * schedule_slot_num_per_path(default 2) clone tasks
+        // Currently FE can have at most num_of_storage_path * schedule_slot_num_per_path(default 2) clone tasks  
         // scheduled simultaneously, but previously we have only 3 clone worker threads by default,
         // so this is to keep the dop of clone task handling in sync with FE.
         //
