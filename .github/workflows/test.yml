@@ -52,10 +52,15 @@ jobs:
           git checkout -b merge_pr;
           git merge --squash --no-edit ${BRANCH} || (echo "Merge conflict, please check." && exit -1);
 
+      - name: pwd
+        - run: |
+            pwd
+            ls
+
       - name: Run
         uses: DoozyX/clang-format-lint-action@v0.14
         with:
-          source: 'be/src be/test'
+          source: './be/src ./be/test'
           extensions: 'h,cpp'
           clangFormatVersion: 14
           style: llvm
