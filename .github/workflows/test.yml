@@ -58,7 +58,7 @@ jobs:
           ls
 
       - name: Run
-        uses: DoozyX/clang-format-lint-action@v0.14
+        uses: DoozyX/clang-format-lint-action
         with:
           source: '${{ github.workspace }}/be/src ${{ github.workspace }}/be/test'
           extensions: 'h,cpp'
