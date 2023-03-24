@@ -60,7 +60,7 @@ jobs:
       - name: Run
         uses: DoozyX/clang-format-lint-action@v0.14
         with:
-          source: ${{ github.workspace }}/be/src
+          source: ${{ github.workspace }}/be/src/*
           extensions: 'h,cpp'
           clangFormatVersion: 14
           style: llvm
