@@ -67,17 +67,13 @@ jobs:
 
       - name: UT Reports
         if: success() || failure()
-        uses: EnricoMi/publish-unit-test-result-action@v1
         with:
-          report_suite_logs: 'any'
-          action_fail: true
-          files: './test/nosetests.xml'
-#        uses: mikepenz/action-junit-report@v3
-#        with:
-#          check_name: 'SQL-Tester Report'
-#          fail_on_failure: true
-#          token: ${{ secrets.GITHUB_TOKEN }}
-#          report_paths: ./test/nosetests.xml
-#          detailed_summary: true
-#
+          check_name: 'SQL-Tester Report'
+          fail_on_failure: true
+          token: ${{ secrets.GITHUB_TOKEN }}
+          report_paths: ./test/nosetests.xml
+          detailed_summary: true
+          summary: true
+          job_summary: false
+
 
