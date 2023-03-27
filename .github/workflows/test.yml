@@ -70,4 +70,4 @@ jobs:
           detailed_summary: true
           fail_on_failure: false
           token: ${{ secrets.GITHUB_TOKEN }}
-          report_paths: ./nosetests.xml
+          report_paths: ./test/nosetests.xml
