@@ -69,5 +69,5 @@ jobs:
           check_name: 'SQL-Tester Report'
           detailed_summary: true
           fail_on_failure: false
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.PAT }}
           report_paths: ./test/nosetests.xml
