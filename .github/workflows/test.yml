@@ -66,13 +66,12 @@ jobs:
 #          TODO: output echo "FE: ${{needs.deploy.outputs.fe}}, BE: ${{needs.deploy.outputs.be}}"
 
       - name: UT Reports
-        if: always()
         uses: dorny/test-reporter@v1
-          if: success() || failure()
-          with:
-            name: JEST Tests
-            path: ./test/nosetests.xml
-            reporter: java-junit
+        if: success() || failure()
+        with:
+          name: JEST Tests
+          path: ./test/nosetests.xml
+          reporter: java-junit
 #        uses: mikepenz/action-junit-report@v3
 #        with:
 #          check_name: 'SQL-Tester Report'
