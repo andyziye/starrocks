@@ -74,7 +74,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           report_paths: ./test/nosetests.xml
           detailed_summary: true
-          summary: true
+          summary: false
           job_summary: false
 
 
