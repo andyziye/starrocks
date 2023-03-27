@@ -72,6 +72,7 @@ jobs:
           name: JEST Tests            # Name of the check run which will be created
           path: ./test/nosetests.xml    # Path to test results
           reporter: java-junit      # Format of test results
+
 #        uses: mikepenz/action-junit-report@v3
 #        with:
 #          check_name: 'SQL-Tester Report'
