@@ -67,13 +67,12 @@ jobs:
 
 #          ./bin/run-sql-tester.sh
 #          TODO: output echo "FE: ${{needs.deploy.outputs.fe}}, BE: ${{needs.deploy.outputs.be}}"
-      - name: Save event
-        id: save_event
+
+      - name: prepare
         run: |
-          set -x
-          echo ${GITHUB_EVENT_PATH}
-          echo ${GITHUB_EVENT_NAME}
-          cat ${GITHUB_EVENT_PATH}
+          set -ex
+          cd ${{ github.workspace }}/.github/actions/action-junit-report
+          git clone https://github.com/mikepenz/action-junit-report.git .
 
       - name: UT Reports
         if: success() || failure()
