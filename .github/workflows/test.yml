@@ -25,11 +25,11 @@ jobs:
     runs-on: self-hosted
     steps:
       - name: Login to GHCR
-        uses: docker/login-action@v1
+        uses: docker/login-action@v2
         with:
           registry: ghcr.io
           username: andyziye
-          password: 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
+          password: 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
   SQL-Tester:
     runs-on: self-hosted
     name: SQL-Tester
