@@ -85,7 +85,6 @@ jobs:
         if: success() || failure()
         run: |
           set -x
-          ls /home/disk1/nas/event_dir/${{ steps.save_event.outputs.EVENT_DIR }}
           /usr/bin/docker run --label b1cbc5 --workdir /github/workspace --rm -e "PR_NUMBER" -e "INPUT_FILES" \
           -e "INPUT_EVENT_FILE" -e "INPUT_GITHUB_TOKEN" -e "INPUT_GITHUB_RETRIES" -e "INPUT_COMMIT" \
           -e "INPUT_CHECK_NAME" -e "INPUT_COMMENT_TITLE" -e "INPUT_COMMENT_MODE" -e "INPUT_FAIL_ON" \
