@@ -68,7 +68,9 @@ jobs:
 #          ./bin/run-sql-tester.sh
 #          TODO: output echo "FE: ${{needs.deploy.outputs.fe}}, BE: ${{needs.deploy.outputs.be}}"
       - run: |
+          set -x
           echo ${GITHUB_EVENT_PATH}
+          cat ${GITHUB_EVENT_PATH}
 
       - name: UT Reports
         if: success() || failure()
