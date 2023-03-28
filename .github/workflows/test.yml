@@ -67,12 +67,13 @@ jobs:
 
       - name: UT Reports
         if: success() || failure()
-        uses: docker://ghcr.io/enricomi/publish-unit-test-result-action:v1.6
+        uses: EnricoMi/publish-unit-test-result-action@v2.6.1
         with:
-          files: |
-            test/*.xml
-          junit_files: "test/*.xml"
-          report_suite_logs: "any"
+          files: test/*.xml
+#          files: |
+#            test/*.xml
+#          junit_files: "test/*.xml"
+#          report_suite_logs: "any"
 #        uses: mikepenz/action-junit-report@v3
 #        with:
 #          check_name: 'SQL-Tester Report'
