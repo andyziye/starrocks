@@ -71,13 +71,15 @@ jobs:
           set -x
           echo ${GITHUB_EVENT_PATH}
           cat ${GITHUB_EVENT_PATH}
+          cp ${GITHUB_EVENT_PATH} ${{ github.workspace }}
+          cat ${{ github.workspace }}/event.json
 
       - name: UT Reports
         if: success() || failure()
         uses: EnricoMi/publish-unit-test-result-action@v2.6.1
         with:
           files: test/*.xml
-          event_file: /home/runner/_work/_temp/_github_workflow/event.json
+          event_file: ${{ github.workspace }}/event.json
 #          files: |
 #            test/*.xml
 #          junit_files: "test/*.xml"
