@@ -21,15 +21,6 @@ permissions:
   statuses: write
 
 jobs:
-  test:
-    runs-on: self-hosted
-    steps:
-      - name: Login to GHCR
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: andyziye
-          password: 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
   SQL-Tester:
     runs-on: self-hosted
     name: SQL-Tester
@@ -123,7 +114,8 @@ jobs:
 ##          junit_files: "test/*.xml"
 ##          report_suite_logs: "any"
 #        uses: mikepenz/action-junit-report@v3
-        uses: docker://ghcr.io/andyziye/action-junit-report:1.0.10
+#        uses: docker://ghcr.io/andyziye/action-junit-report:1.0.10
+        uses: ./.github/actions/action-junit-report
         with:
           check_name: 'SQL-Tester Report'
           fail_on_failure: true
