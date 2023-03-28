@@ -64,7 +64,8 @@ jobs:
 
 #          ./bin/run-sql-tester.sh
 #          TODO: output echo "FE: ${{needs.deploy.outputs.fe}}, BE: ${{needs.deploy.outputs.be}}"
-
+      - run: echo ${{ GITHUB_EVENT_PATH }}
+      - run: echo ${GITHUB_EVENT_PATH}
       - name: UT Reports
         if: success() || failure()
         uses: EnricoMi/publish-unit-test-result-action@v2.6.1
