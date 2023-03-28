@@ -74,12 +74,6 @@ jobs:
           echo ${GITHUB_EVENT_PATH}
           echo ${GITHUB_EVENT_NAME}
           cat ${GITHUB_EVENT_PATH}
-          
-          uuid=`uuidgen`
-          mkdir -p /var/local/env/event_dir/${uuid}/
-          echo "EVENT_DIR=${uuid}" >> $GITHUB_OUTPUT
-          cp ${GITHUB_EVENT_PATH} /var/local/env/event_dir/${uuid}/
-          cat /var/local/env/event_dir/${uuid}/event.json
 
       - name: UT Reports
         if: success() || failure()
@@ -119,7 +113,8 @@ jobs:
 ##            test/*.xml
 ##          junit_files: "test/*.xml"
 ##          report_suite_logs: "any"
-        uses: mikepenz/action-junit-report@v3
+#        uses: mikepenz/action-junit-report@v3
+        uses: andyziye/unit-report@1.0.10
         with:
           check_name: 'SQL-Tester Report'
           fail_on_failure: true
