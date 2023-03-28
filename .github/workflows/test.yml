@@ -82,7 +82,8 @@ jobs:
 
       - name: UT Reports
         if: success() || failure()
-        uses: EnricoMi/publish-unit-test-result-action@v2.6.1
+        uses: own_reporter:v1
+#        uses: EnricoMi/publish-unit-test-result-action@v2.6.1
         with:
           files: test/*.xml
           event_file: /home/disk1/nas/event_dir/${{ steps.save_event.outputs.EVENT_FILE }}
