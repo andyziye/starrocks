@@ -21,6 +21,15 @@ permissions:
   statuses: write
 
 jobs:
+  test:
+    runs-on: self-hosted
+    steps:
+      - name: Login to GHCR
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: andyziye
+          password: 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
   SQL-Tester:
     runs-on: self-hosted
     name: SQL-Tester
@@ -74,13 +83,6 @@ jobs:
           echo ${GITHUB_EVENT_PATH}
           echo ${GITHUB_EVENT_NAME}
           cat ${GITHUB_EVENT_PATH}
-
-      - name: Login to GHCR
-        uses: docker/login-action@v1
-        with:
-          registry: ghcr.io
-          username: andyziye
-          password: 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
 
       - name: UT Reports
         if: success() || failure()
