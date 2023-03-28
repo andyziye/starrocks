@@ -76,7 +76,7 @@ jobs:
           cat ${GITHUB_EVENT_PATH}
           
           uuid=`uuidgen`
-          cp ${GITHUB_EVENT_PATH}/event.json /var/local/env/event_dir/event_${uuid}.json
+          cp ${GITHUB_EVENT_PATH} /var/local/env/event_dir/event_${uuid}.json
           echo "EVENT_FILE=/var/local/env/event_dir/event_${uuid}.json" >> $GITHUB_OUTPUT
           cat /var/local/env/event_dir/event_${uuid}.json
 
