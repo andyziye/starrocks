@@ -129,6 +129,7 @@ jobs:
           job_summary: false
 
       - name: Generate Report
+        if: success() || failure()
         id: xunit-viewer
         uses: AutoModality/action-xunit-viewer@v1
         with:
