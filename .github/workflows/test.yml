@@ -114,7 +114,7 @@ jobs:
 ##          junit_files: "test/*.xml"
 ##          report_suite_logs: "any"
 #        uses: mikepenz/action-junit-report@v3
-        uses: docker://ghcr.io/andyziye/action-junit-report:1.0.10
+        uses: docker://ghcr.io/andyziye/action-junit-report:v1.0.10
         with:
           check_name: 'SQL-Tester Report'
           fail_on_failure: true
