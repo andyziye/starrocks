@@ -71,7 +71,10 @@ jobs:
       - name: prepare
         run: |
           set -ex
-          cd ${{ github.workspace }}/.github/actions/action-junit-report
+          
+          cd ${{ github.workspace }}
+          mkdir -p .github/actions/action-junit-report
+          cd .github/actions/action-junit-report
           git clone https://github.com/mikepenz/action-junit-report.git .
 
       - name: UT Reports
