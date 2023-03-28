@@ -85,7 +85,7 @@ jobs:
         if: success() || failure()
         run: |
           set -x
-          ls /home/disk1/nas/${{ steps.save_event.outputs.EVENT_DIR }}
+          ls /home/disk1/nas/event_dir/${{ steps.save_event.outputs.EVENT_DIR }}
           /usr/bin/docker run --label b1cbc5 --workdir /github/workspace --rm -e "PR_NUMBER" -e "INPUT_FILES" \
           -e "INPUT_EVENT_FILE" -e "INPUT_GITHUB_TOKEN" -e "INPUT_GITHUB_RETRIES" -e "INPUT_COMMIT" \
           -e "INPUT_CHECK_NAME" -e "INPUT_COMMENT_TITLE" -e "INPUT_COMMENT_MODE" -e "INPUT_FAIL_ON" \
@@ -110,7 +110,7 @@ jobs:
           -v "/home/runner/_work/_temp/_github_home":"/github/home" \
           -v "/home/runner/_work/_temp/_runner_file_commands":"/github/file_commands" \
           -v "/home/runner/_work/starrocks/starrocks":"/github/workspace" \
-          -v "/home/disk1/nas/${{ steps.save_event.outputs.EVENT_DIR }}":"/github/workflow" \
+          -v "/home/disk1/nas/event_dir/${{ steps.save_event.outputs.EVENT_DIR }}":"/github/workflow" \
           ghcr.io/enricomi/publish-unit-test-result-action:v2.6.1
 #        uses: EnricoMi/publish-unit-test-result-action@v2.6.1
 #        with:
