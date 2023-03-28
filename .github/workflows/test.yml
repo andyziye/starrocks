@@ -127,3 +127,11 @@ jobs:
           report_paths: ./test/nosetests.xml
           detailed_summary: false
           job_summary: false
+
+      - name: Generate Report
+        id: xunit-viewer
+        uses: AutoModality/action-xunit-viewer@v1
+        with:
+          results: ./test/
+      - name: The generated report
+        run: echo "The report is ${{ steps.xunit-viewer.outputs.report-file }}"
