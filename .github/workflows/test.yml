@@ -70,6 +70,7 @@ jobs:
       - run: |
           set -x
           echo ${GITHUB_EVENT_PATH}
+          echo ${GITHUB_EVENT_NAME}
           cat ${GITHUB_EVENT_PATH}
           cp ${GITHUB_EVENT_PATH} ${{ github.workspace }}
           cat ${{ github.workspace }}/event.json
