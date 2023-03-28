@@ -68,7 +68,7 @@ jobs:
 #          ./bin/run-sql-tester.sh
 #          TODO: output echo "FE: ${{needs.deploy.outputs.fe}}, BE: ${{needs.deploy.outputs.be}}"
 
-      - name: prepare
+      - name: prepares
         run: |
           set -ex
           cd ${{ github.workspace }}/.github/actions/action-junit-report
