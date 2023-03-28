@@ -67,20 +67,25 @@ jobs:
 
 #          ./bin/run-sql-tester.sh
 #          TODO: output echo "FE: ${{needs.deploy.outputs.fe}}, BE: ${{needs.deploy.outputs.be}}"
-      - run: |
+      - name: Save event
+        id: save_event
+        run: |
           set -x
           echo ${GITHUB_EVENT_PATH}
           echo ${GITHUB_EVENT_NAME}
           cat ${GITHUB_EVENT_PATH}
-          cp ${GITHUB_EVENT_PATH} ${{ github.workspace }}
-          cat ${{ github.workspace }}/event.json
+          
+          uuid=`uuidgen`
+          cp ${GITHUB_EVENT_PATH}/event.json /var/local/env/event_dir/event_${uuid}.json
+          echo "EVENT_FILE=/var/local/env/event_dir/event_${uuid}.json" >> $GITHUB_OUTPUT
+          cat /var/local/env/event_dir/event_${uuid}.json
 
       - name: UT Reports
         if: success() || failure()
         uses: EnricoMi/publish-unit-test-result-action@v2.6.1
         with:
           files: test/*.xml
-          event_file: ${{ github.workspace }}/event.json
+          event_file: ${{ steps.save_event.outputs.EVENT_FILE }}
 #          files: |
 #            test/*.xml
 #          junit_files: "test/*.xml"
