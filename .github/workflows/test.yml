@@ -124,15 +124,6 @@ jobs:
           check_name: 'SQL-Tester Report'
           fail_on_failure: true
           token: ${{ secrets.GITHUB_TOKEN }}
-          report_paths: ./test/nosetests.xml
-          detailed_summary: false
-          job_summary: false
-
-      - name: Generate Report
-        if: success() || failure()
-        id: xunit-viewer
-        uses: AutoModality/action-xunit-viewer@v1
-        with:
-          results: ./test/
-      - name: The generated report
-        run: echo "The report is ${{ steps.xunit-viewer.outputs.report-file }}"
+          report_paths: ./test/
+          detailed_summary: true
+          job_summary: true
