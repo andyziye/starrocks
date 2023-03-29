@@ -74,14 +74,14 @@ jobs:
           
           cd ${{ github.workspace }}
           cp /var/local/env/nosetests.xml .
-          mkdir -p .github/actions/action-junit-report
-          cd .github/actions/action-junit-report
+          mkdir -p .actions/nose-report-action
+          cd .actions/nose-report-action
           git clone https://github.com/andyziye/action-junit-report.git .
           
 
       - name: UT Reports
         if: success() || failure()
-        uses: ./.github/actions/action-junit-report
+        uses: ./.actions/nose-report-action
         with:
           check_name: 'SQL-Tester Report'
           fail_on_failure: true
