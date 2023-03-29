@@ -88,4 +88,4 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           report_paths: ./*.xml
           detailed_summary: true
-          job_summary: true
+#          job_summary: true
