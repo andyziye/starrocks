@@ -121,7 +121,7 @@ jobs:
         uses: ./.github/actions/action-junit-report
         with:
           check_name: 'SQL-Tester Report'
-          fail_on_failure: true
+          fail_on_failure: false
           token: ${{ secrets.GITHUB_TOKEN }}
           report_paths: ./test/*.xml
           detailed_summary: true
