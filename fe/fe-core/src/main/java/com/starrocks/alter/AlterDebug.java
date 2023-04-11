@@ -49,6 +49,6 @@ public class AlterDebug {
         schemaChangeHandler = new SchemaChangeHandler();
         materializedViewHandler = new MaterializedViewHandler();
         clusterHandler = new SystemHandler();
-        System.out.println("DEBUG !!!!!!!!!");
+        System.out.println("DEBUG !!!!!!!!!!");
     }
 }
