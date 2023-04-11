@@ -81,37 +81,6 @@ jobs:
           echo ${{github.base_ref}}
           echo "branch=${{github.base_ref}}" >> $GITHUB_OUTPUT
 
-#      - name: UPDATE ECI & RUN UT
-#        id: run_ut
-#        shell: bash
-#        timeout-minutes: 90
-#        run: |
-#          set -ex
-#          rm -rf ./elastic-service
-#          ln -s /var/lib/elastic-service ./elastic-service
-#          cd elastic-service && git pull
-#          ./bin/elastic-ut.sh --pr ${PR_NUMBER} --module be --branch ${{steps.branch.outputs.branch}}
-#
-#      - name: clean ECI
-#        if: always()
-#        run: |
-#          echo ${{ steps.run_ut.outputs.ECI_ID }}
-#          eci rm ${{ steps.run_ut.outputs.ECI_ID }}
-#
-#      - name: Upload log
-#        uses: actions/upload-artifact@v3
-#        if: always()
-#        with:
-#          name: BE UT LOG
-#          path: ${{ steps.run_ut.outputs.RES_LOG }}
-#          retention-days: 1
-#
-#      - name: Clean ENV
-#        if: always()
-#        run: |
-#          rm -f ${{ steps.run_ut.outputs.RES_FILE }}
-#          rm -f ${{ steps.run_ut.outputs.RES_LOG }}
-
   fe-checker:
     runs-on: ubuntu-latest
     name: FE FILTER
@@ -165,54 +134,17 @@ jobs:
           rm -rf ./elastic-service
           ln -s /var/lib/elastic-service ./elastic-service
           cd elastic-service && git pull
-#          ./bin/elastic-ut.sh --pr ${PR_NUMBER} --module fe --branch ${{steps.branch.outputs.branch}}
+          ./bin/elastic-ut.sh --pr ${PR_NUMBER} --module fe --branch ${{steps.branch.outputs.branch}}
 
-#      - name: Clean ECI
-#        if: always()
-#        run: |
-#          echo ${{ steps.run_ut.outputs.ECI_ID }}
-#          eci rm ${{ steps.run_ut.outputs.ECI_ID }}
-
-#      - name: UT Report
-#        if: always()
-#        uses: mikepenz/action-junit-report@v3
-#        with:
-#          check_name: 'FE UT Report'
-#          detailed_summary: true
-#          token: ${{ secrets.GITHUB_TOKEN }}
-#          report_paths: ${{ steps.run_ut.outputs.FE_REPORT_DIR }}/*.xml
-
-#      - name: Upload log
-#        if: always()
-#        uses: actions/upload-artifact@v3
-#        with:
-#          name: FE UT LOG
-#          path: ${{ steps.run_ut.outputs.RES_LOG }}
-#          retention-days: 1
-
-      - run: |
-          mkdir test && cd test
-          cp -rf /var/local/env/jacoco_test/* .
-          cp -rf /var/local/env/eci-t4n35243vb5z91frthgk_fe_ut_report fe_ut_report
-
-#      - name: JaCoCo Code Coverage Report
-#        id: jacoco_reporter
-#        uses: PavanMudigonda/jacoco-reporter@v4.8
-#        with:
-#          coverage_results_path: ./test/coverage.xml
-#          coverage_report_name: Coverage
-#          coverage_report_title: JaCoCo
-#          github_token: ${{ secrets.GITHUB_TOKEN }}
-#          skip_check_run: false
-#          minimum_coverage: 80
-#          fail_below_threshold: false
-#          publish_only_summary: false
-
+#      - run: |
+#          mkdir test && cd test
+#          cp -rf /var/local/env/jacoco_test/* .
+#          cp -rf /var/local/env/eci-t4n35243vb5z91frthgk_fe_ut_report fe_ut_report
 
       - uses: codecov/codecov-action@v3
         with:
-          token: ${{ secrets.CODECOV_TOKEN }} # not required for public repos
-          files: ./test/coverage.xml
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ${{steps.branch.outputs.COV_FILE}}
           dry_run: false
           name: codecov-umbrella
           fail_ci_if_error: true
