@@ -199,7 +199,9 @@ jobs:
       - uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV_TOKEN }} # not required for public repos
-          directory: ./test
+          fixes:
+            - "::fe/fe-core/src/main/java/"
+          files: ./test/coverage.xml
           dry_run: true
           name: codecov-umbrella # optional
           fail_ci_if_error: false # optional (default = false)
