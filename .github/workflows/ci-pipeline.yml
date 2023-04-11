@@ -213,10 +213,10 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }} # not required for public repos
           files: ./test/coverage.xml
-          dry_run: true
+          dry_run: false
           name: codecov-umbrella
           fail_ci_if_error: false
-          verbose: true
+          verbose: false
 
       - name: Clean ENV
         if: always()
