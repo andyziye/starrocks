@@ -90,7 +90,7 @@ jobs:
 #          rm -rf ./elastic-service
 #          ln -s /var/lib/elastic-service ./elastic-service
 #          cd elastic-service && git pull
-#          ./bin/elastic-ut.sh --pr ${PR_NUMBER} --module be
+#          ./bin/elastic-ut.sh --pr ${PR_NUMBER} --module be --branch ${{steps.branch.outputs.branch}}
 #
 #      - name: clean ECI
 #        if: always()
@@ -161,7 +161,7 @@ jobs:
           rm -rf ./elastic-service
           ln -s /var/lib/elastic-service ./elastic-service
           cd elastic-service && git pull
-          ./bin/elastic-ut.sh --pr ${PR_NUMBER} --module fe
+          ./bin/elastic-ut.sh --pr ${PR_NUMBER} --module fe --branch ${{steps.branch.outputs.branch}}
 
 #      - name: Clean ECI
 #        if: always()
