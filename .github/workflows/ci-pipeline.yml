@@ -146,6 +146,10 @@ jobs:
       - name: Clean Workspace
         uses: AutoModality/action-clean@v1.1.0
 
+      - name: clean
+        run: |
+          rm -rf ${{ github.workspace }}/*
+
       - name: BRANCH INFO
         id: branch
         run: |
@@ -190,6 +194,7 @@ jobs:
       - run: |
           mkdir test && cd test
           cp -rf /var/local/env/jacoco_test/* .
+          cp -rf /var/local/env/eci-t4n35243vb5z91frthgk_fe_ut_report .
 
       - uses: codecov/codecov-action@v3
         with:
