@@ -142,7 +142,7 @@ public class Alter {
             throws DdlException, AnalysisException {
         String tableName = stmt.getBaseIndexName();
         // check dbs
-        System.out.println("DEBUG !!!!!!!");
+        System.out.println("DEBUG !!!!!!!!");
         String dbName = stmt.getDBName();
         Database db = GlobalStateMgr.getCurrentState().getDb(dbName);
         if (db == null) {
