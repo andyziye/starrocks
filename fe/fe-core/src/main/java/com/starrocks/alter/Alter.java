@@ -141,7 +141,8 @@ public class Alter {
     public void processCreateMaterializedView(CreateMaterializedViewStmt stmt)
             throws DdlException, AnalysisException {
         String tableName = stmt.getBaseIndexName();
-        // check db
+        // check dbs
+        System.out.println("DEBUG !!!!!!!");
         String dbName = stmt.getDBName();
         Database db = GlobalStateMgr.getCurrentState().getDb(dbName);
         if (db == null) {
