@@ -147,7 +147,7 @@ jobs:
       - run: |
           mkdir test
           cd test
-          cp /var/local/env/jacoco_test2 . -rf
+          cp /var/local/env/jacoco_test2/* . -rf
 
       - uses: codecov/codecov-action@v3
         with:
