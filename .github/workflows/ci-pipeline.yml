@@ -190,7 +190,6 @@ jobs:
 #          path: ${{ steps.run_ut.outputs.RES_LOG }}
 #          retention-days: 1
 
-      # TODO 会清理吗
       - run: |
           mkdir test && cd test
           cp -rf /var/local/env/jacoco_test/* .
