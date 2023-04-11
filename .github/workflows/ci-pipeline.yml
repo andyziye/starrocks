@@ -194,18 +194,32 @@ jobs:
       - run: |
           mkdir test && cd test
           cp -rf /var/local/env/jacoco_test/* .
-          cp -rf /var/local/env/eci-t4n35243vb5z91frthgk_fe_ut_report .
+          cp -rf /var/local/env/eci-t4n35243vb5z91frthgk_fe_ut_report fe_ut_report
 
-      - uses: codecov/codecov-action@v3
+      - name: JaCoCo Code Coverage Report
+        id: jacoco_reporter
+        uses: PavanMudigonda/jacoco-reporter@v4.8
         with:
-          token: ${{ secrets.CODECOV_TOKEN }} # not required for public repos
-          fixes:
-            - "::fe/fe-core/src/main/java/"
-          files: ./test/coverage.xml
-          dry_run: true
-          name: codecov-umbrella # optional
-          fail_ci_if_error: false # optional (default = false)
-          verbose: true # optional (default = false)
+          coverage_results_path: ./coverage.xml
+          coverage_report_name: Coverage
+          coverage_report_title: JaCoCo
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          skip_check_run: false
+          minimum_coverage: 80
+          fail_below_threshold: false
+          publish_only_summary: false
+
+
+      #      - uses: codecov/codecov-action@v3
+#        with:
+#          token: ${{ secrets.CODECOV_TOKEN }} # not required for public repos
+#          fixes:
+#            - "::fe/fe-core/src/main/java/"
+#          files: ./test/coverage.xml
+#          dry_run: true
+#          name: codecov-umbrella # optional
+#          fail_ci_if_error: false # optional (default = false)
+#          verbose: true # optional (default = false)
 
       - name: Clean ENV
         if: always()
