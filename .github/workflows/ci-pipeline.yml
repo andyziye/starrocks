@@ -10,10 +10,9 @@ on:
       - main
       - coverage
 
-  push:
-    branches:
-      - main
-      - coverage
+concurrency:
+  group: ${{ github.event.number }}
+  cancel-in-progress: true
 
 permissions:
   checks: write
