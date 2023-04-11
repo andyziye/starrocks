@@ -209,14 +209,14 @@ jobs:
 #          publish_only_summary: false
 
 
-        - uses: codecov/codecov-action@v3
-          with:
-            token: ${{ secrets.GITHUB_TOKEN }} # not required for public repos
-            files: ./test/coverage.xml
-            dry_run: true
-            name: codecov-umbrella
-            fail_ci_if_error: false
-            verbose: true
+      - uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }} # not required for public repos
+          files: ./test/coverage.xml
+          dry_run: true
+          name: codecov-umbrella
+          fail_ci_if_error: false
+          verbose: true
 
       - name: Clean ENV
         if: always()
