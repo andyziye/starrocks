@@ -188,8 +188,8 @@ jobs:
 
       # TODO 会清理吗
       - run: |
-        mkdir test && cd test
-        cp -rf /var/local/env/jacoco_test/* .
+          mkdir test && cd test
+          cp -rf /var/local/env/jacoco_test/* .
 
       - uses: codecov/codecov-action@v3
         with:
