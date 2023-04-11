@@ -34,6 +34,10 @@
 
 package com.starrocks.alter;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+
 public class AlterDebug {
     private static final Logger LOG = LogManager.getLogger(AlterDebug.class);
 
