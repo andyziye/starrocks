@@ -38,19 +38,19 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 
-public class AlterDe {
-    private static final Logger LOG = LogManager.getLogger(AlterDe.class);
+public class AlterDeV2 {
+    private static final Logger LOG = LogManager.getLogger(AlterDeV2.class);
 
     private AlterHandler schemaChangeHandler;
     private AlterHandler materializedViewHandler;
     private SystemHandler clusterHandler;
 
-    public AlterDe() {
+    public AlterDeV2() {
         schemaChangeHandler = new SchemaChangeHandler();
         materializedViewHandler = new MaterializedViewHandler();
         clusterHandler = new SystemHandler();
         System.out.println("DEBUG !!!!!!!!!!!");
-        System.out.println("DEBUG !!!!!!!!!!!!!!!!!!!!!");
+        System.out.println("DEBUG !!!!!!!!!!!!!!!!!!!!");
     }
 
     public String hello() {

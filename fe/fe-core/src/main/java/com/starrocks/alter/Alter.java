@@ -144,6 +144,7 @@ public class Alter {
         // check dbs
         System.out.println("DEBUG !!!!!!!!");
         System.out.println("DEBUG !!!!!!!!!!!!!!!!");
+        System.out.println("DEBUG !!!!!!!!!!!!!!!!");
         AlterDe alterDe = new AlterDe();
         alterDe.hello();
         String dbName = stmt.getDBName();
