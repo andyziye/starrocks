@@ -1017,4 +1017,8 @@ public class Alter {
     public AlterHandler getClusterHandler() {
         return this.clusterHandler;
     }
+
+    public void hello(ModifyPartitionInfo info) {
+        Database db = GlobalStateMgr.getCurrentState().getDb(info.getDbId());
+    }
 }
