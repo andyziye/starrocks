@@ -127,42 +127,63 @@ jobs:
           echo ${{github.base_ref}}
           echo "branch=${{github.base_ref}}" >> $GITHUB_OUTPUT
 
-      - name: UPDATE ECI & RUN UT
-        id: run_ut
-        shell: bash
-        timeout-minutes: 60
+      - name: Checkout PR
         run: |
-          set -ex
-          rm -rf ./elastic-service
-          ln -s /var/lib/elastic-service ./elastic-service
-          cd elastic-service && git pull
-          ./bin/elastic-ut.sh --pr ${PR_NUMBER} --module fe --branch ${{steps.branch.outputs.branch}}
+          BRANCH=${{steps.branch.outputs.branch}}
+          git checkout $BRANCH;
+          git pull;
+          BRANCH_NAME="${BRANCH}-${PR_NUMBER}";
+          git fetch origin pull/${PR_NUMBER}/head:${BRANCH_NAME};
+          git checkout $BRANCH_NAME;
+          git checkout -b merge_pr;
+          git merge --squash --no-edit ${BRANCH} || (echo "Merge conflict, please check." && exit -1);
 
-      - name: Clean ECI
-        if: always()
+      - name: copy cov
         run: |
-          echo ${{ steps.run_ut.outputs.ECI_ID }}
-          eci rm ${{ steps.run_ut.outputs.ECI_ID }}
+          cd fe/fe-core/target
+          cp -rf /var/local/env/eci-t4nbtjge2ftgkrgqzwtv_fe_ut_cov_dir/* .
 
-      - run: echo ${{ steps.run_ut.outputs.COV_DIR }}/${{ steps.run_ut.outputs.COV_FILE }}
+#      - name: UPDATE ECI & RUN UT
+#        id: run_ut
+#        shell: bash
+#        timeout-minutes: 60
+#        run: |
+#          set -ex
+#          rm -rf ./elastic-service
+#          ln -s /var/lib/elastic-service ./elastic-service
+#          cd elastic-service && git pull
+#          ./bin/elastic-ut.sh --pr ${PR_NUMBER} --module fe --branch ${{steps.branch.outputs.branch}}
+#
+#      - name: Clean ECI
+#        if: always()
+#        run: |
+#          echo ${{ steps.run_ut.outputs.ECI_ID }}
+#          eci rm ${{ steps.run_ut.outputs.ECI_ID }}
+#
+#      - run: echo ${{ steps.run_ut.outputs.COV_DIR }}/${{ steps.run_ut.outputs.COV_FILE }}
+#
+#      - uses: codecov/codecov-action@v3
+#        with:
+#          token: ${{ secrets.CODECOV_TOKEN }}
+#          files: ${{ steps.run_ut.outputs.COV_DIR }}/${{ steps.run_ut.outputs.COV_FILE }}
+#          dry_run: false
+#          name: codecov-umbrella
+#          fail_ci_if_error: true
+#          verbose: true
 
       - uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          files: ${{ steps.run_ut.outputs.COV_DIR }}/${{ steps.run_ut.outputs.COV_FILE }}
+          files: fe/fe-core/target/eci-t4nbtjge2ftgkrgqzwtv_coverage.xml
           dry_run: false
           name: codecov-umbrella
           fail_ci_if_error: true
           verbose: true
 
-#      - uses: codecov/codecov-action@v3
+#      - name: Coveralls
+#        uses: coverallsapp/github-action@v1
 #        with:
-#          token: ${{ secrets.CODECOV_TOKEN }}
-#          files: /var/local/env/eci-t4nhw6wq9vt2ml650sza_fe_ut_cov_dir/coverage.xml
-#          dry_run: false
-#          name: codecov-umbrella
-#          fail_ci_if_error: true
-#          verbose: true
+#          path-to-lcov: /var/local/env/eci-t4nhw6wq9vt2ml650sza_fe_ut_cov_dir/coverage.xml
 
       - name: Clean ENV
         if: always()
