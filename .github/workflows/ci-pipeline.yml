@@ -144,7 +144,7 @@ jobs:
 
       - name: copy cov
         run: |
-          cd fe/fe-core/target
+          cd ${{ github.workspace }}/fe/fe-core/target
           cp -rf /var/local/env/eci-t4nbtjge2ftgkrgqzwtv_fe_ut_cov_dir/* .
 
 #      - name: UPDATE ECI & RUN UT
@@ -178,7 +178,7 @@ jobs:
       - uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          files: fe/fe-core/target/eci-t4nbtjge2ftgkrgqzwtv_coverage.xml
+          files: ${{ github.workspace }}/fe/fe-core/target/eci-t4nbtjge2ftgkrgqzwtv_coverage.xml
           dry_run: false
           name: codecov-umbrella
           fail_ci_if_error: true
