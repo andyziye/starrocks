@@ -148,12 +148,12 @@ jobs:
 #          mkdir test
 #          cd test
 #          cp /var/local/env/jacoco_test2/* . -rf
-      - run: echo ${{steps.branch.outputs.COV_FILE}}
+      - run: echo ${{steps.run_ut.outputs.COV_FILE}}
 
       - uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          files: ${{ steps.branch.outputs.COV_FILE }}
+          files: ${{ steps.run_ut.outputs.COV_FILE }}
           dry_run: false
           name: codecov-umbrella
           fail_ci_if_error: true
