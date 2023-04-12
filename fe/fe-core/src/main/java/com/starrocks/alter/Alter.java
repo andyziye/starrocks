@@ -1020,5 +1020,7 @@ public class Alter {
 
     public void hello(ModifyPartitionInfo info) {
         Database db = GlobalStateMgr.getCurrentState().getDb(info.getDbId());
+        AlterDe alterDe = new AlterDe();
+        alterDe.hello();
     }
 }
