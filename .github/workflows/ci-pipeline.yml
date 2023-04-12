@@ -144,7 +144,7 @@ jobs:
 
       - name: copy cov
         run: |
-          cd ${{ github.workspace }}/fe/fe-core/target
+          cd ${{ github.workspace }}/fe/fe-core && mkdir target
           cp -rf /var/local/env/eci-t4nbtjge2ftgkrgqzwtv_fe_ut_cov_dir/* .
 
 #      - name: UPDATE ECI & RUN UT
