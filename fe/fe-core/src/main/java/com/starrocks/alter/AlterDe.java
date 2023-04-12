@@ -50,10 +50,10 @@ public class AlterDe {
         materializedViewHandler = new MaterializedViewHandler();
         clusterHandler = new SystemHandler();
         System.out.println("DEBUG !!!!!!!!!!!");
-        System.out.println("DEBUG !!!!!!!!!!!!!!!!!");
+        System.out.println("DEBUG !!!!!!!!!!!!!!!!!!!");
     }
 
     public String hello() {
-        return "abc";
+        return "abcd";
     }
 }
