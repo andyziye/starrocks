@@ -1,3 +1,17 @@
+comment:
+  layout: "header, diff, flags, files, tree, footer"
+coverage:
+  status:
+    project:
+      default:
+        target: 60%
+        threshold: 5%
+        only_pulls: true
+    patch:
+      default:
+        target: 80%
+        only_pulls: true
+
 #coverage:
 #  status:
 #    project:
