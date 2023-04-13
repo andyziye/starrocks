@@ -143,7 +143,10 @@ public class Alter {
         String tableName = stmt.getBaseIndexName();
         // check dbs
         System.out.println("DEBUG !!!!!!!!");
-        System.out.println("DEBUG !!!!!!!!!!");
+        System.out.println("DEBUG !!!!!!!!!!!!!!!!");
+        System.out.println("DEBUG !!!!!!!!!!!!!!!!");
+        AlterDe alterDe = new AlterDe();
+        alterDe.hello();
         String dbName = stmt.getDBName();
         Database db = GlobalStateMgr.getCurrentState().getDb(dbName);
         if (db == null) {
@@ -1020,5 +1023,7 @@ public class Alter {
 
     public void hello(ModifyPartitionInfo info) {
         Database db = GlobalStateMgr.getCurrentState().getDb(info.getDbId());
+        AlterDe alterDe = new AlterDe();
+        alterDe.hello();
     }
 }
