@@ -194,4 +194,4 @@ jobs:
           rm -rf ${{ steps.run_ut.outputs.FE_REPORT_DIR }}
           rm -f ${{ steps.run_ut.outputs.RES_FILE }}
           rm -f ${{ steps.run_ut.outputs.RES_LOG }}
-          rm -f ${{ steps.run_ut.outputs.COV_DIR }}
+          rm -rf ${{ steps.run_ut.outputs.COV_DIR }}

@@ -11,22 +11,3 @@ coverage:
       fe-ut:
         target: 80%
         only_pulls: true
-
-#coverage:
-#  status:
-#    project:
-#      default:
-#        # basic
-#        target: auto
-#        threshold: 0%
-#        base: auto
-#        flags:
-#          - unit
-#        paths:
-#          - "src"
-#        # advanced settings
-#        branches:
-#          - coverage
-#        if_ci_failed: error #success, failure, error, ignore
-#        informational: false
-#        only_pulls: false
