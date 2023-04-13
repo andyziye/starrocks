@@ -1,5 +1,5 @@
 comment:
-  layout: "newheader, diff, flags, files, tree, newfooter"
+  layout: "header, diff, flags, files, tree, footer"
 coverage:
   status:
     project:
