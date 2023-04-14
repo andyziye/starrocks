@@ -49,8 +49,8 @@ public class AlterDe {
         schemaChangeHandler = new SchemaChangeHandler();
         materializedViewHandler = new MaterializedViewHandler();
         clusterHandler = new SystemHandler();
-        System.out.println("DEBUG !!!!!!!!!!!！!");
         System.out.println("DEBUG !!!!!!!");
+        System.out.println("DEBUG2 !!!!!!!");
     }
 
     public String hello() {
