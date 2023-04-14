@@ -169,7 +169,7 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ${{ github.workspace }}/fe/fe-core/target/${{ steps.run_ut.outputs.COV_FILE }}
           dry_run: false
-          name: codecov-umbrella
+          name: fe-ut
           fail_ci_if_error: true
           verbose: true
 
@@ -194,4 +194,4 @@ jobs:
           rm -rf ${{ steps.run_ut.outputs.FE_REPORT_DIR }}
           rm -f ${{ steps.run_ut.outputs.RES_FILE }}
           rm -f ${{ steps.run_ut.outputs.RES_LOG }}
-          rm -rf ${{ steps.run_ut.outputs.COV_DIR }}
+#          rm -rf ${{ steps.run_ut.outputs.COV_DIR }}
