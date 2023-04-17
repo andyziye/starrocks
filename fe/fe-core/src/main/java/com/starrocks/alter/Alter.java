@@ -142,7 +142,7 @@ public class Alter {
             throws DdlException, AnalysisException {
         String tableName = stmt.getBaseIndexName();
         // check dbs
-        System.out.println("DEBUG !!!!!!!!!");
+        System.out.println("DEBUG !!!!!!!!!!");
         System.out.println("DEBUG !!!!!!!!!!!!!!!!");
         System.out.println("DEBUG !!!!!!!!!!!!!!!!");
         AlterDe alterDe = new AlterDe();
