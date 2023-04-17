@@ -49,7 +49,7 @@ public class AlterDeV3 {
         schemaChangeHandler = new SchemaChangeHandler();
         materializedViewHandler = new MaterializedViewHandler();
         clusterHandler = new SystemHandler();
-        System.out.println("DEBUG !!!!!!!!!!!");
+        System.out.println("DEBUG !!!!!!!!!1!!");
         System.out.println("DEBUG !!!!!!!!!!!!!!!!!!!!!!!!!");
     }
 
