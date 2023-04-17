@@ -50,7 +50,7 @@ public class AlterDeV3 {
         materializedViewHandler = new MaterializedViewHandler();
         clusterHandler = new SystemHandler();
         System.out.println("DEBUG !!!!!!!!!1112!!");
-        System.out.println("DEBUG !!!!!!!!!!!!!!!!!!!!!!!!!");
+        System.out.println("DEBUG !!!!!!!!!!!!!!!1!!!!!!!!!!");
     }
 
     public String hello() {
