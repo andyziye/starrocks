@@ -140,8 +140,7 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ${{ github.workspace }}/fe/fe-core/target/eci-t4n52phvssta56q8ey20_coverage.xml
-          override_pr:
-          dry_run: false
+          dry_run: true
           name: fe-ut
           fail_ci_if_error: true
           verbose: true
