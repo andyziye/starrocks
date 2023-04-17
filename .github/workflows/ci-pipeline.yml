@@ -29,58 +29,6 @@ permissions:
   statuses: write
 
 jobs:
-  doc-checker:
-    runs-on: ubuntu-latest
-    name: DOC FILTER
-    outputs:
-      output1: ${{ steps.doc-changes-info.outputs.doc }}
-    steps:
-      - uses: dorny/paths-filter@v2
-        id: changes
-        with:
-          filters: |
-            doc:
-            - 'docs/**'
-      - name: DOC CHECK INFO
-        id: doc-changes-info
-        run: |
-          echo "doc=${{ steps.changes.outputs.doc }}" >> $GITHUB_OUTPUT
-
-  be-checker:
-    runs-on: ubuntu-latest
-    name: BE FILTER
-    outputs:
-      output1: ${{ steps.be-changes-info.outputs.be }}
-    steps:
-      - uses: dorny/paths-filter@v2
-        id: changes
-        with:
-          filters: |
-            be:
-            - 'be/**'
-            - 'gensrc/**'
-            - 'run-be-ut.sh'
-            - 'build.sh'
-
-      - name: BE CHECK INFO
-        id: be-changes-info
-        run: |
-          echo "be=${{ steps.changes.outputs.be }}" >> $GITHUB_OUTPUT
-
-  be-ut:
-    runs-on: self-hosted
-    needs: [ be-checker ]
-    timeout-minutes: 90
-    name: BE UT
-    env:
-      PR_NUMBER: ${{ github.event.number }}
-    steps:
-      - name: BRANCH INFO
-        id: branch
-        run: |
-          echo ${{github.base_ref}}
-          echo "branch=${{github.base_ref}}" >> $GITHUB_OUTPUT
-
   fe-checker:
     runs-on: ubuntu-latest
     name: FE FILTER
