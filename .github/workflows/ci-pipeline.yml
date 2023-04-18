@@ -191,6 +191,8 @@ jobs:
           cd ${{ github.workspace }}/coverchecker
           time_count=0
           pull_status=1
+          export JAVA_HOME=/var/local/env/jdk1.8.0_202;
+          export PATH=$JAVA_HOME/bin:$PATH;
           while (( $pull_status != 0 ));do
             if (( $time_count == 3 ));then
             exit 1
