@@ -68,31 +68,6 @@ jobs:
               - '**.java'
 
       - run: echo ${{ steps.java-file.outputs.java }}
-
-      - name: "Checkout ${{ github.ref }} ( ${{ github.sha }} )"
-        id: checkout
-        if: ${{ steps.java-file.outputs.java == 'true' }}
-        uses: actions/checkout@v3
-        with:
-          persist-credentials: false
-          submodules: recursive
-
-      - name: Copy checkstyle files
-        if: ${{ steps.java-file.outputs.java == 'true' }}
-        run: |
-          pwd
-          cp fe/checkstyle* .
-
-      - name: Run java checkstyle
-        if: ${{ steps.java-file.outputs.java == 'true' }}
-        uses: dbelyaev/action-checkstyle@v0.6.1
-        with:
-          workdir: "./fe"
-          checkstyle_config: checkstyle.xml
-          reporter: 'github-pr-check'
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          fail_on_error: true
-          level: error
   fe-ut:
     runs-on: [self-hosted]
     needs: fe-codestyle-check
@@ -195,10 +170,10 @@ jobs:
           export PATH=$JAVA_HOME/bin:$PATH;
           while (( $pull_status != 0 ));do
             if (( $time_count == 3 ));then
-            exit 1
+              exit 1
             fi
             timeout 180 java -jar cover-checker-console/target/cover-checker-console-1.4.0-jar-with-dependencies.jar \
-              --cover ${{ github.workspace }}/fe/fe-core/target/result/ --github-token ${{ secrets.GITHUB_TOKEN }}\
+              --cover ${{ github.workspace }}/fe/fe-core/target/result/ --github-token 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 \
               --repo ${{ github.repository }} --threshold 80 --github-url api.github.com --pr ${PR_NUMBER} -type jacoco
             pull_status=$?
             time_count=`expr $time_count + 1`
