@@ -386,7 +386,7 @@ public class Alter {
             GlobalStateMgr.getCurrentState().getEditLog().logAlterMaterializedViewProperties(log);
         }
         LOG.info("alter materialized view properties {}, id: {}", propClone, materializedView.getId());
-        LOG.info("debug !");
+        LOG.info("debug !!");
     }
 
     private void processChangeRefreshScheme(RefreshSchemeDesc refreshSchemeDesc, MaterializedView materializedView,
