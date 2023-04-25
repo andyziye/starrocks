@@ -38,8 +38,8 @@ jobs:
     runs-on: self-hosted
     if: ${{ github.event.issue.pull_request }}
     steps:
-      - name: SHA
-        id: sha
+      - name: COMMIT INFO
+        id: info
         run: |
           set -x
           sha=`curl -L \
@@ -50,17 +50,29 @@ jobs:
             | jq .head.sha`
             sha=$(echo ${sha//\"})
           echo "sha=${sha}" >> $GITHUB_OUTPUT
+          
+          ref=`curl -L \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.issue.number }} 2>/dev/null \
+            | jq .base.ref`
+            sha=$(echo ${ref//\"})
+          echo "ref=${ref}" >> $GITHUB_OUTPUT
+          
+          
 
       - run: |
           set -ex
-          sha=`echo ${{ steps.sha.outputs.sha }}`
-          sha=${sha::6}
-          echo ${{ github.base_ref }}
+          echo $NUMBER
+          SHA=${SHA::6}
           cd /var/local/env
-          build_output_tar=oss://starrocks-ci-release/main/Release/pr/starrocks-${sha}.tar.gz
+          build_output_tar=oss://starrocks-ci-release/${BRANCH}/Release/pr/starrocks-${SHA}.tar.gz
           ./ossutil64 --config-file .ossutilconfig ls ${build_output_tar} 
-
-        
+        env:
+          NUMBER: ${{ github.event.issue.number }}
+          SHA: ${{ steps.info.outputs.sha }}
+          BRANCH: ${{ steps.info.outputs.ref }}
 
 #    deploy:
 #      runs-on: self-hosted
