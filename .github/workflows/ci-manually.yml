@@ -6,38 +6,38 @@ on:
       logLevel:
         description: 'Log level'
 
-  concurrency:
-    group: ${{ github.event.number }}-MANUALLY
-    cancel-in-progress: true
+concurrency:
+  group: ${{ github.event.number }}-MANUALLY
+  cancel-in-progress: true
 
-  permissions:
-    checks: write
-    actions: write
-    contents: write
-    deployments: write
-    discussions: write
-    issues: write
-    packages: write
-    pages: write
-    pull-requests: write
-    repository-projects: write
-    security-events: write
-    statuses: write
+permissions:
+  checks: write
+  actions: write
+  contents: write
+  deployments: write
+  discussions: write
+  issues: write
+  packages: write
+  pages: write
+  pull-requests: write
+  repository-projects: write
+  security-events: write
+  statuses: write
 
-  jobs:
-    Test:
-      runs-on: self-hosted
-      steps:
-        - run: |
-            echo 
-            echo ${GITHUB_SHA::6}
+jobs:
+  Test:
+    runs-on: self-hosted
+    steps:
+      - run: |
+          echo 
+          echo ${GITHUB_SHA::6}
 
-        - name: commit_hash
-          id: commit_hash
-          uses: pr-mpt/actions-commit-hash@v2
+      - name: commit_hash
+        id: commit_hash
+        uses: pr-mpt/actions-commit-hash@v2
 
-        - run: |
-            echo ${{ steps.commit_hash.outputs.short }}
+      - run: |
+          echo ${{ steps.commit_hash.outputs.short }}
 
         
 
