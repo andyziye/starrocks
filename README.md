@@ -1,4 +1,4 @@
-s
+ss
  <p align="center">
  <a href="https://starrocks.io/index">
     <img  width="900" src="https://cdn.starrocks.io/static/github/starrocks.png">
