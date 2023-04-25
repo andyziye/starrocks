@@ -41,7 +41,7 @@ jobs:
       PR_NUMBER: ${{ github.event.issue.number }}
     steps:
       - run: |
-          echo ${PR_NUMBER} 
+          echo ${{ github.event.issue.number }}
           echo ${GITHUB_SHA}
           echo ${{ github.sha }}
 
