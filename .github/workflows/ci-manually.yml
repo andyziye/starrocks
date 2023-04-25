@@ -1,14 +1,6 @@
 name: MANUALLY PIPELINE
 
 on:
-  pull_request:
-    types:
-      - opened
-      - synchronize
-
-    branches:
-      - 'branch*'
-      - coverage
   workflow_dispatch:
     inputs:
       logLevel:
@@ -37,8 +29,8 @@ jobs:
     runs-on: self-hosted
     steps:
       - run: |
-          echo 
-          echo ${GITHUB_SHA::6}
+          echo ${{github.GITHUB_SHA::6}}
+          echo ${{ github.sha }}
 
       - name: commit_hash
         id: commit_hash
