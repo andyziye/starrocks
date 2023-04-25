@@ -34,10 +34,11 @@ permissions:
   statuses: write
 
 jobs:
-  Test:
+  regression:
     runs-on: self-hosted
     if: ${{ github.event.issue.pull_request }}
     steps:
+      - run: sleep 120
       - name: COMMIT INFO
         id: info
         run: |
@@ -48,7 +49,7 @@ jobs:
             -H "X-GitHub-Api-Version: 2022-11-28" \
             https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.issue.number }} 2>/dev/null \
             | jq .head.sha`
-            sha=$(echo ${sha//\"})
+          sha=$(echo ${sha//\"})
           echo "sha=${sha}" >> $GITHUB_OUTPUT
           
           ref=`curl -L \
@@ -57,18 +58,17 @@ jobs:
             -H "X-GitHub-Api-Version: 2022-11-28" \
             https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.issue.number }} 2>/dev/null \
             | jq .base.ref`
-            sha=$(echo ${ref//\"})
+          ref=$(echo ${ref//\"})
           echo "ref=${ref}" >> $GITHUB_OUTPUT
-          
-          
 
       - run: |
           set -ex
           echo $NUMBER
-          SHA=${SHA::6}
+          SHA=${SHA::7}
           cd /var/local/env
           build_output_tar=oss://starrocks-ci-release/${BRANCH}/Release/pr/starrocks-${SHA}.tar.gz
-          ./ossutil64 --config-file .ossutilconfig ls ${build_output_tar} 
+          ./ossutil64 --config-file .ossutilconfig ls ${build_output_tar}  | grep tar.gz | head -n 1 \
+            || (echo "Empty tar file, please wait for the build job to be success.." && exit -1)
         env:
           NUMBER: ${{ github.event.issue.number }}
           SHA: ${{ steps.info.outputs.sha }}
