@@ -52,10 +52,13 @@ jobs:
           echo "sha=${sha}" >> $GITHUB_OUTPUT
 
       - run: |
-          echo ${{ steps.sha.outputs.sha }}
-          sha=${{ steps.sha.outputs.sha }}
-          echo ${sha::6}
-
+          set -ex
+          sha=`echo ${{ steps.sha.outputs.sha }}`
+          sha=${sha::6}
+          echo ${{ github.base_ref }}
+          cd /var/local/env
+          build_output_tar=oss://starrocks-ci-release/main/Release/pr/starrocks-${sha}.tar.gz
+          ./ossutil64 --config-file .ossutilconfig ls ${build_output_tar} 
 
         
 
