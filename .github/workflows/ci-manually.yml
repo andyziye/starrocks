@@ -55,7 +55,6 @@ jobs:
           echo ${{ steps.sha.outputs.sha }}
           sha=${{ steps.sha.outputs.sha }}
           echo ${sha::6}
-          echo ${{ steps.sha.outputs.sha::6 }}
 
 
         
