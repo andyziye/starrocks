@@ -1,6 +1,14 @@
 name: MANUALLY PIPELINE
 
 on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+
+    branches:
+      - 'branch*'
+      - coverage
   workflow_dispatch:
     inputs:
       logLevel:
