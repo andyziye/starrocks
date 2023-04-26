@@ -36,9 +36,8 @@ permissions:
 jobs:
   regression:
     runs-on: self-hosted
-    if: ${{ github.event.issue.pull_request }}
+    if: github.event.issue.pull_request && github.event.comment.body =~ "run regression"
     steps:
-      - run: sleep 120
       - name: COMMIT INFO
         id: info
         run: |
@@ -61,7 +60,8 @@ jobs:
           ref=$(echo ${ref//\"})
           echo "ref=${ref}" >> $GITHUB_OUTPUT
 
-      - run: |
+      - name: Check TAR
+        run: |
           set -ex
           echo $NUMBER
           SHA=${SHA::7}
@@ -74,11 +74,9 @@ jobs:
           SHA: ${{ steps.info.outputs.sha }}
           BRANCH: ${{ steps.info.outputs.ref }}
 
-#    deploy:
-#      runs-on: self-hosted
-#      if: always() && needs.build.result == 'success'
-#      needs: build
-#      name: DEPLOY SR
+      - name: Deploy SR
+        run: |
+          echo ${NUMBER}
 #      env:
 #        PR_NUMBER: ${{ github.event.number }}
 #        CLUSTER_NAME: admit-default
@@ -114,7 +112,7 @@ jobs:
 #
 #        - run: |
 #            echo "FE: ${{steps.deploy_sr.outputs.fe}}, BE: ${{steps.deploy_sr.outputs.be}}"
-#
+
 #      admit:
 #        runs-on: self-hosted
 #        name: ADMIT TEST
