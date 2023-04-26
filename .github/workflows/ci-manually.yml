@@ -42,7 +42,7 @@ jobs:
           echo ${{ github.event.comment.body }}
       - name: COMMIT INFO
         id: info
-        if: "${{ github.event.comment.body }}" =~ "run regression"
+        if: github.event.comment.body =~ "run regression"
         run: |
           set -x
           sha=`curl -L \
