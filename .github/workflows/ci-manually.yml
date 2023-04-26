@@ -38,7 +38,7 @@ jobs:
     runs-on: self-hosted
     if: > 
       github.event.issue.pull_request && 
-      contains(github.event.commit.body, 'run regression')
+      contains(github.event.comment.body, 'run regression')
     steps:
 
       - name: COMMIT INFO
