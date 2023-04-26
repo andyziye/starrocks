@@ -38,6 +38,8 @@ jobs:
     runs-on: self-hosted
     if: ${{ github.event.issue.pull_request }} && [[ ${{ github.event.comment.body }} =~ "run regression" ]]
     steps:
+      - run: |
+          echo ${{ github.event.comment.body }}
       - name: COMMIT INFO
         id: info
         run: |
