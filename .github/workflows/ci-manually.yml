@@ -36,12 +36,13 @@ permissions:
 jobs:
   regression:
     runs-on: self-hosted
-    if: ${{ github.event.issue.pull_request }} && "${{ github.event.comment.body }}" =~ "run regression"
+    if: ${{ github.event.issue.pull_request }} &&
     steps:
       - run: |
           echo ${{ github.event.comment.body }}
       - name: COMMIT INFO
         id: info
+        if: "${{ github.event.comment.body }}" =~ "run regression"
         run: |
           set -x
           sha=`curl -L \
