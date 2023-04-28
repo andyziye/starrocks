@@ -43,55 +43,55 @@ jobs:
         with:
           url: "http://39.101.206.100:8090"
           user: "starrocks"
-          token: 11b8304904f5e2f9420780688e296db9e6
+          token: ${{ secrets.JENKINS_TOKEN }}
           job: "test"
 
-  init:
-    name: INIT
-    runs-on: self-hosted
-    if: > 
-      github.event.issue.pull_request && 
-      contains(github.event.comment.body, 'run regression')
-    outputs:
-      SHA: ${{ steps.check_tar.outputs.SHA }}
-      TAR_PATH: ${{ steps.check_tar.outputs.TAR_PATH }}
-      REF: ${{ steps.info.outputs.ref }}
-    steps:
-      - name: COMMIT INFO
-        id: info
-        run: |
-          set -eo pipefail
-          sha=`curl -L \
-            -H "Accept: application/vnd.github+json" \
-            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.issue.number }} 2>/dev/null \
-            | jq .head.sha`
-          echo "sha=${sha//\"}" >> $GITHUB_OUTPUT
-          
-          ref=`curl -L \
-            -H "Accept: application/vnd.github+json" \
-            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.issue.number }} 2>/dev/null \
-            | jq .base.ref`
-          echo "ref=${ref//\"}" >> $GITHUB_OUTPUT
-
-      - name: Check TAR
-        id: check_tar
-        env:
-          NUMBER: ${{ github.event.issue.number }}
-          SHA: ${{ steps.info.outputs.sha }}
-          BRANCH: ${{ steps.info.outputs.ref }}
-        run: |
-          set -eo pipefail
-          SHA=${SHA::7}
-          cd /var/local/env
-          build_output_tar=oss://starrocks-ci-release/${BRANCH}/Release/pr/starrocks-${SHA}.tar.gz
-          ./ossutil64 --config-file .ossutilconfig ls ${build_output_tar}  | grep tar.gz | head -n 1 \
-            || (echo "Empty tar file, please wait for the build job to be success.." && exit -1)
-          echo "SHA=${SHA}" >> $GITHUB_OUTPUT
-          echo "TAR_PATH=${build_output_tar}" >> $GITHUB_OUTPUT
+#  init:
+#    name: INIT
+#    runs-on: self-hosted
+#    if: >
+#      github.event.issue.pull_request &&
+#      contains(github.event.comment.body, 'run regression')
+#    outputs:
+#      SHA: ${{ steps.check_tar.outputs.SHA }}
+#      TAR_PATH: ${{ steps.check_tar.outputs.TAR_PATH }}
+#      REF: ${{ steps.info.outputs.ref }}
+#    steps:
+#      - name: COMMIT INFO
+#        id: info
+#        run: |
+#          set -eo pipefail
+#          sha=`curl -L \
+#            -H "Accept: application/vnd.github+json" \
+#            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+#            -H "X-GitHub-Api-Version: 2022-11-28" \
+#            https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.issue.number }} 2>/dev/null \
+#            | jq .head.sha`
+#          echo "sha=${sha//\"}" >> $GITHUB_OUTPUT
+#
+#          ref=`curl -L \
+#            -H "Accept: application/vnd.github+json" \
+#            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+#            -H "X-GitHub-Api-Version: 2022-11-28" \
+#            https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.issue.number }} 2>/dev/null \
+#            | jq .base.ref`
+#          echo "ref=${ref//\"}" >> $GITHUB_OUTPUT
+#
+#      - name: Check TAR
+#        id: check_tar
+#        env:
+#          NUMBER: ${{ github.event.issue.number }}
+#          SHA: ${{ steps.info.outputs.sha }}
+#          BRANCH: ${{ steps.info.outputs.ref }}
+#        run: |
+#          set -eo pipefail
+#          SHA=${SHA::7}
+#          cd /var/local/env
+#          build_output_tar=oss://starrocks-ci-release/${BRANCH}/Release/pr/starrocks-${SHA}.tar.gz
+#          ./ossutil64 --config-file .ossutilconfig ls ${build_output_tar}  | grep tar.gz | head -n 1 \
+#            || (echo "Empty tar file, please wait for the build job to be success.." && exit -1)
+#          echo "SHA=${SHA}" >> $GITHUB_OUTPUT
+#          echo "TAR_PATH=${build_output_tar}" >> $GITHUB_OUTPUT
 
 #  Deploy SR:
 #    runs-on: self-hosted
