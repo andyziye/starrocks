@@ -41,10 +41,13 @@ jobs:
       - name: trigger single Job
         uses: appleboy/jenkins-action@master
         with:
-          url: "http://39.101.206.100:8090"
-          user: "starrocks"
-          token: ${{ secrets.JENKINS_TOKEN }}
-          job: "test"
+          jenkins-server: "http://39.101.206.100:8090"
+          jenkins-job: "test"
+          jenkins-username: "starrocks"
+          jenkins-pat: ${{ secrets.JENKINS_TOKEN }}
+          poll-time: 10
+          timeout-value: 360
+          verbose: true
 
 #  init:
 #    name: INIT
