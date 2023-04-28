@@ -39,15 +39,15 @@ jobs:
     runs-on: self-hosted
     steps:
       - name: trigger single Job
-        uses: mickeygoussetorg/trigger-jenkins-job@v1
+        uses: jabbukka/jenkins-trigger@main
         with:
-          jenkins-server: "http://39.101.206.100:8090"
-          jenkins-job: "test"
-          jenkins-username: "starrocks"
-          jenkins-pat: ${{ secrets.JENKINS_TOKEN }}
-          poll-time: 10
-          timeout-value: 360
-          verbose: true
+          url: "http://39.101.206.100:8090"
+          job_name: "test"
+          user_name: "starrocks"
+          api_token: ${{ secrets.JENKINS_TOKEN }}
+          wait: "true"
+          timeout: 60
+          parameter: {"param1":"value1"}
 
 #  init:
 #    name: INIT
