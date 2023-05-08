@@ -49,6 +49,6 @@ jobs:
         with:
           style: ''
           tidy-checks: ''
-          version: 14
+          version: ''
           lines-changed-only: false
           ignore: '!be/'
