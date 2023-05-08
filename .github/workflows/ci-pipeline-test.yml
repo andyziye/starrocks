@@ -1,0 +1,54 @@
+name: CI PIPELINE TEST
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+
+concurrency:
+  group: ${{ github.event.number }}
+  cancel-in-progress: true
+
+permissions:
+  checks: write
+  actions: write
+  contents: write
+  deployments: write
+  discussions: write
+  issues: write
+  packages: write
+  pages: write
+  pull-requests: write
+  repository-projects: write
+  security-events: write
+  statuses: write
+
+jobs:
+  jenkins:
+    name: jenkins
+    runs-on: self-hosted
+    env:
+      jenkins_url: http://39.101.206.100:8090
+      jenkins_user: starrocks
+      jenkins_job: test
+    steps:
+      - name: Clean Workspace
+        run: |
+          rm -rf ${{ github.workspace }}/*
+
+      - name: Checkout Code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - uses: cpp-linter/cpp-linter-action@v2
+        id: linter
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          style: ''
+          tidy-checks: ''
+          version: 14
+          lines-changed-only: false
+          ignore: '!be/'
