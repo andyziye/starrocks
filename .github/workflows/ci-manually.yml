@@ -42,28 +42,65 @@ jobs:
       jenkins_user: starrocks
       jenkins_job: test
     steps:
-      - name: trigger single Job
-        id: trigger_job
-        uses: jabbukka/jenkins-trigger@main
-        with:
-          url: http://39.101.206.100:8090
-          job_name: test
-          user_name: starrocks
-          api_token: ${{ secrets.JENKINS_TOKEN }}
-          wait: "false"
-          timeout: 60
-          parameter: '{"param1":"XXXXXXXXXXXXXXXXXXXXXX"}'
-
-      - uses: sergeysova/jq-action@v2
-        with:
-          cmd: jq -n ${{ steps.trigger_job.outputs }}
-
-      - name: log
+      - name: Clean Workspace
         run: |
-          export JAVA_HOME=/var/local/env/jdk1.8.0_202;
-          export PATH=$JAVA_HOME/bin:$PATH;
-          echo ${{ steps.trigger_job.outputs }}
-          java -jar /var/local/env/jenkins-cli.jar  -s ${jenkins_url} -auth ${jenkins_user}:${{ secrets.JENKINS_TOKEN }} console test 45 -f
+          rm -rf ${{ github.workspace }}/*
+
+      - name: Checkout Code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: BRANCH INFO
+        id: branch
+        run: |
+          echo ${{github.base_ref}}
+          echo "branch=${{github.base_ref}}" >> $GITHUB_OUTPUT
+
+      - name: Checkout PR
+        run: |
+          BRANCH=${{steps.branch.outputs.branch}}
+          git checkout $BRANCH;
+          git pull;
+          BRANCH_NAME="${BRANCH}-${PR_NUMBER}";
+          git fetch origin pull/${PR_NUMBER}/head:${BRANCH_NAME};
+          git checkout $BRANCH_NAME;
+          git checkout -b merge_pr;
+          git merge --squash --no-edit ${BRANCH} || (echo "Merge conflict, please check." && exit -1);
+
+      - uses: cpp-linter/cpp-linter-action@v2
+        id: linter
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          style: ''
+          tidy-checks: ''
+          version: 14
+          lines-changed-only: false
+          ignore: '!be/'
+
+#      - name: trigger single Job
+#        id: trigger_job
+#        uses: jabbukka/jenkins-trigger@main
+#        with:
+#          url: http://39.101.206.100:8090
+#          job_name: test
+#          user_name: starrocks
+#          api_token: ${{ secrets.JENKINS_TOKEN }}
+#          wait: "false"
+#          timeout: 60
+#          parameter: '{"param1":"XXXXXXXXXXXXXXXXXXXXXX"}'
+#
+#      - uses: sergeysova/jq-action@v2
+#        with:
+#          cmd: jq -n ${{ steps.trigger_job.outputs }}
+#
+#      - name: log
+#        run: |
+#          export JAVA_HOME=/var/local/env/jdk1.8.0_202;
+#          export PATH=$JAVA_HOME/bin:$PATH;
+#          echo ${{ steps.trigger_job.outputs }}
+#          java -jar /var/local/env/jenkins-cli.jar  -s ${jenkins_url} -auth ${jenkins_user}:${{ secrets.JENKINS_TOKEN }} console test 45 -f
 
 #  init:
 #    name: INIT
