@@ -52,7 +52,6 @@ jobs:
           api_token: ${{ secrets.JENKINS_TOKEN }}
           wait: "false"
           timeout: 60
-          parameter: '{"param1":"XXXXXXXXXXXXXXXXXXXXXX"}'
 
       - name: log
         run: |
