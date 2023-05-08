@@ -51,22 +51,22 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: BRANCH INFO
-        id: branch
-        run: |
-          echo ${{github.base_ref}}
-          echo "branch=${{github.base_ref}}" >> $GITHUB_OUTPUT
+#      - name: BRANCH INFO
+#        id: branch
+#        run: |
+#          echo ${{github.base_ref}}
+#          echo "branch=${{github.base_ref}}" >> $GITHUB_OUTPUT
 
-      - name: Checkout PR
-        run: |
-          BRANCH=${{steps.branch.outputs.branch}}
-          git checkout $BRANCH;
-          git pull;
-          BRANCH_NAME="${BRANCH}-${PR_NUMBER}";
-          git fetch origin pull/${PR_NUMBER}/head:${BRANCH_NAME};
-          git checkout $BRANCH_NAME;
-          git checkout -b merge_pr;
-          git merge --squash --no-edit ${BRANCH} || (echo "Merge conflict, please check." && exit -1);
+#      - name: Checkout PR
+#        run: |
+#          BRANCH=${{steps.branch.outputs.branch}}
+#          git checkout $BRANCH;
+#          git pull;
+#          BRANCH_NAME="${BRANCH}-${PR_NUMBER}";
+#          git fetch origin pull/${PR_NUMBER}/head:${BRANCH_NAME};
+#          git checkout $BRANCH_NAME;
+#          git checkout -b merge_pr;
+#          git merge --squash --no-edit ${BRANCH} || (echo "Merge conflict, please check." && exit -1);
 
       - uses: cpp-linter/cpp-linter-action@v2
         id: linter
