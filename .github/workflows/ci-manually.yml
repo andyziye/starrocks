@@ -37,17 +37,27 @@ jobs:
   jenkins:
     name: jenkins
     runs-on: self-hosted
+    env:
+      jenkins_url: http://39.101.206.100:8090
+      jenkins_user: starrocks
+      jenkins_job: test
     steps:
       - name: trigger single Job
+        id: trigger_job
         uses: jabbukka/jenkins-trigger@main
         with:
-          url: "http://39.101.206.100:8090"
-          job_name: "test"
-          user_name: "starrocks"
+          url: ${jenkins_url}
+          job_name: ${jenkins_job}
+          user_name: ${jenkins_user}
           api_token: ${{ secrets.JENKINS_TOKEN }}
-          wait: "true"
+          wait: "false"
           timeout: 60
-          parameter: '{"param1":"value1"}'
+          parameter: '{"param1":"XXXXXXXXXXXXXXXXXXXXXX"}'
+
+      - name: log
+        run: |
+          echo ${{ steps.trigger_job.outputs }}
+          java -jar /var/local/env/jenkins-cli.jar  -s ${jenkins_url} -auth ${jenkins_user}:${{ secrets.JENKINS_TOKEN }} console test 45 -f
 
 #  init:
 #    name: INIT
