@@ -46,7 +46,7 @@ jobs:
         id: trigger_job
         uses: jabbukka/jenkins-trigger@main
         with:
-          url: http://39.101.206.100:8090
+          url: ${{ jenkins_url }}
           job_name: test
           user_name: starrocks
           api_token: ${{ secrets.JENKINS_TOKEN }}
@@ -54,8 +54,14 @@ jobs:
           timeout: 60
           parameter: '{"param1":"XXXXXXXXXXXXXXXXXXXXXX"}'
 
+      - uses: sergeysova/jq-action@v2
+        with:
+          cmd: jq -n ${{ steps.trigger_job.outputs }}
+
       - name: log
         run: |
+          export JAVA_HOME=/var/local/env/jdk1.8.0_202;
+          export PATH=$JAVA_HOME/bin:$PATH;
           echo ${{ steps.trigger_job.outputs }}
           java -jar /var/local/env/jenkins-cli.jar  -s ${jenkins_url} -auth ${jenkins_user}:${{ secrets.JENKINS_TOKEN }} console test 45 -f
 
