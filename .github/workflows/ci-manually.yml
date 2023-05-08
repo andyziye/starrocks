@@ -46,7 +46,7 @@ jobs:
         id: trigger_job
         uses: jabbukka/jenkins-trigger@main
         with:
-          url: ${ jenkins_url }
+          url: http://39.101.206.100:8090
           job_name: test
           user_name: starrocks
           api_token: ${{ secrets.JENKINS_TOKEN }}
