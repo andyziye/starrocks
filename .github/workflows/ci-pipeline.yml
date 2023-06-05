@@ -7,7 +7,7 @@ on:
       - synchronize
 
     branches:
-      - clean_fork
+      - fork-main
 
 concurrency:
   group: ${{ github.event.number }}
