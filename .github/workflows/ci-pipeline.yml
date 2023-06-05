@@ -39,6 +39,7 @@ jobs:
         run: |
           set -x
           rm -rf ${{ github.workspace }}
+          mkdir -p ${{ github.workspace }}/starrocks
 
       - name: Checkout Code
         uses: actions/checkout@v3
