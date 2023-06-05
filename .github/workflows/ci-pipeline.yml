@@ -31,11 +31,9 @@ jobs:
 
   clang-format:
     runs-on: self-hosted
-    needs: be-checker
     name: Clang-Format
     env:
       PR_NUMBER: ${{ github.event.number }}
-    if: ${{ needs.be-checker.outputs.output1 == 'true' }}
     steps:
       - name: clean
         run: |
