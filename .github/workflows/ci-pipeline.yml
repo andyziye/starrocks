@@ -486,6 +486,7 @@ jobs:
           echo "branch=${{github.base_ref}}" >> $GITHUB_OUTPUT
           repo="${{ github.repository }}"
           bucket_prefix=`echo ${repo%/*} | tr '[:upper:]' '[:lower:]'` 
+          bucket_prefix=starrocks
           echo "bucket_prefix=${bucket_prefix}" >> $GITHUB_OUTPUT
 
       - uses: actions/checkout@v3
@@ -656,6 +657,7 @@ jobs:
           cd ci-tool && source lib/init.sh
           repo="${{ github.repository }}"
           bucket_prefix=`echo ${repo%/*} | tr '[:upper:]' '[:lower:]'`
+          bucket_prefix=starrocks
           tar_path="oss://${bucket_prefix}-ci-release/${{steps.branch.outputs.branch}}/Release/pr/${{needs.build.outputs.build_output_tar}}"
           echo ${tar_path}
           ./bin/deploy-cluster.sh -c ${CLUSTER_NAME} --output ${tar_path} --with-coverage
@@ -696,6 +698,7 @@ jobs:
           echo "branch=${{github.base_ref}}" >> $GITHUB_OUTPUT
           repo="${{ github.repository }}"
           bucket_prefix=`echo ${repo%/*} | tr '[:upper:]' '[:lower:]'` 
+          bucket_prefix=starrocks
           echo "bucket_prefix=${bucket_prefix}" >> $GITHUB_OUTPUT
 
       - name: Checkout PR
@@ -751,6 +754,7 @@ jobs:
           echo "branch=${{github.base_ref}}" >> $GITHUB_OUTPUT
           repo="${{ github.repository }}"
           bucket_prefix=`echo ${repo%/*} | tr '[:upper:]' '[:lower:]'` 
+          bucket_prefix=starrocks
           echo "bucket_prefix=${bucket_prefix}" >> $GITHUB_OUTPUT
 
       - name: Run Case
