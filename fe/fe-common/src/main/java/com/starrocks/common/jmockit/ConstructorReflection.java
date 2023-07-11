@@ -142,7 +142,7 @@ public final class ConstructorReflection {
             Class<?> declaringClass = theClass.getDeclaringClass();
             Class<?>[] paramTypes = declaredConstructors[0].getParameterTypes();
             // check if this constructor is belong to a inner class
-            // the parameter[0] of inner class's constructor is a instance of outer class
+            // the parameter[0] of inner class's constructor is a instance of outer classsss
             if (paramTypes[0] == declaringClass && paramTypes.length > argTypes.length) {
                 throw new IllegalArgumentException(
                         "Invalid instantiation of inner class; use newInnerInstance instead");
