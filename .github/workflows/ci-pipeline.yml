@@ -408,7 +408,7 @@ jobs:
 
   sonarcloud-fe:
     runs-on: ubuntu-latest
-    needs: sonarcloud-fe-checker
+    needs: fe-checker
     if: needs.fe-checker.outputs.output1 == 'true'
     name: FE Sonarcloud Check
     steps:
