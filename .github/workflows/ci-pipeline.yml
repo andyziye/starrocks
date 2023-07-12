@@ -527,31 +527,23 @@ jobs:
           cd ${{ github.workspace }}/fe/fe-core
           cp -rf ${{ steps.run_ut.outputs.COV_DIR }} target/
 
-      - name: Coverage Report
-        uses: codecov/codecov-action@v3
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: ${{ github.workspace }}/fe/fe-core/target/${{ steps.run_ut.outputs.COV_FILE }}
-          dry_run: false
-          name: fe-ut
-          fail_ci_if_error: false
-          verbose: true
+#      - name: Upload Result
+#        if: steps.run_ut.outcome == 'success'
+#        run: |
+#          branch=${{ steps.branch.outputs.branch }}
+#          bucket_prefix=${{ steps.branch.outputs.bucket_prefix }}
+#          ossutil64 --config-file ~/.ossutilconfig rm oss://${bucket_prefix}-ci-release/$branch/Release/pr/UT-Result/${PR_NUMBER}/ -rf
+#          ossutil64 --config-file ~/.ossutilconfig cp fe/fe-core/target oss://${bucket_prefix}-ci-release/$branch/Release/pr/UT-Result/${PR_NUMBER}/ --recursive --force --tagging="type=ci"
+# fe-core/target/result/
 
-      - name: Upload Result
-        if: steps.run_ut.outcome == 'success'
-        run: |
-          branch=${{ steps.branch.outputs.branch }}
-          bucket_prefix=${{ steps.branch.outputs.bucket_prefix }}
-          ossutil64 --config-file ~/.ossutilconfig rm oss://${bucket_prefix}-ci-release/$branch/Release/pr/UT-Result/${PR_NUMBER}/ -rf
-          ossutil64 --config-file ~/.ossutilconfig cp fe/fe-core/target/result/ oss://${bucket_prefix}-ci-release/$branch/Release/pr/UT-Result/${PR_NUMBER}/ --recursive --force --tagging="type=ci"
-
-      - name: Upload UT XML
-        if: always()
-        run: |
-          branch=${{ steps.branch.outputs.branch }}
-          bucket_prefix=${{ steps.branch.outputs.bucket_prefix }}
-          ossutil64 --config-file ~/.ossutilconfig rm oss://${bucket_prefix}-ci-release/$branch/Release/pr/UT-XML/${PR_NUMBER}/ -rf
-          ossutil64 --config-file ~/.ossutilconfig cp ${{ steps.run_ut.outputs.FE_REPORT_DIR }}/ oss://${bucket_prefix}-ci-release/$branch/Release/pr/UT-XML/${PR_NUMBER}/ --recursive --force --tagging="type=ci"
+#      - name: Upload UT XML
+#        if: always()
+#        run: |
+#          branch=${{ steps.branch.outputs.branch }}
+#          bucket_prefix=${{ steps.branch.outputs.bucket_prefix }}
+#          ossutil64 --config-file ~/.ossutilconfig rm oss://${bucket_prefix}-ci-release/$branch/Release/pr/UT-XML/${PR_NUMBER}/ -rf
+#          ossutil64 --config-file ~/.ossutilconfig cp ${{ steps.run_ut.outputs.FE_REPORT_DIR }}/ oss://${bucket_prefix}-ci-release/$branch/Release/pr/UT-XML/${PR_NUMBER}/ --recursive --force --tagging="type=ci"
+# fe-core/target/surefire-reports/*.xml
 
       - name: Upload log
         if: always()
@@ -607,6 +599,14 @@ jobs:
       - name: build result
         run: |
           echo ${{ steps.run_build.outputs.OUTPUT_TAR }}
+          echo ${{ steps.run_build.outputs.BASE_VERSION }} > ./base_version.txt
+
+      - name: Upload the Base Version
+        uses: actions/upload-artifact@v2
+        with:
+          name: base_version
+          path: ./base_version.txt
+          retention-days: 1
 
       - name: clean ECI
         if: always()
