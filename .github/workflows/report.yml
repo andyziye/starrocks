@@ -100,6 +100,7 @@ jobs:
         run: |
           repo="${{ github.repository }}"
           bucket_prefix=`echo ${repo%/*} | tr '[:upper:]' '[:lower:]'`
+          bucket_prefix=starrocks
           echo "bucket_prefix=${bucket_prefix}" >> $GITHUB_OUTPUT
 
       - name: Download FE UT XML
@@ -217,6 +218,7 @@ jobs:
         run: |
           repo="${{ github.repository }}"
           bucket_prefix=`echo ${repo%/*} | tr '[:upper:]' '[:lower:]'`
+          bucket_prefix=starrocks
           echo "bucket_prefix=${bucket_prefix}" >> $GITHUB_OUTPUT
 
       - name: Download SQL-Tester XML
@@ -267,6 +269,7 @@ jobs:
         run: |
           repo="${{ github.repository }}"
           bucket_prefix=`echo ${repo%/*} | tr '[:upper:]' '[:lower:]'`
+          bucket_prefix=starrocks
           echo "bucket_prefix=${bucket_prefix}" >> $GITHUB_OUTPUT
 
       - name: Download Admit XML
