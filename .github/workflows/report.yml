@@ -75,12 +75,12 @@ jobs:
         run: |
           PR_NUMBER=`echo ${PR_NUMBER}`
           base_ref=`gh pr view ${PR_NUMBER} -R ${REPO} --json baseRefName -q .baseRefName`
-          echo "BASE_REF=${base_ref}" >> $GITHUB_OUTPUT 
-          echo "PR_NUMBER=${PR_NUMBER}" >> $GITHUB_OUTPUT 
-          
+          echo "BASE_REF=${base_ref}" >> $GITHUB_OUTPUT
+          echo "PR_NUMBER=${PR_NUMBER}" >> $GITHUB_OUTPUT
+
           if [[ ${{ steps.check_version_file_exist.outputs.is_exist }} == 'true' ]]; then
             base_version=`echo "${{ steps.base_version_reader.outputs.content }}"`
-            echo "BASE_VERSION=${base_version}" >> $GITHUB_OUTPUT    
+            echo "BASE_VERSION=${base_version}" >> $GITHUB_OUTPUT
           fi
 
   FE-UT-REPORT:
@@ -132,7 +132,7 @@ jobs:
 
       # Incremental UT Coverage
       - name: Publish Incremental Coverage Report
-        if: steps.download-incremental-result.outputs.size != '0'
+        if: steps.download-ut-xml.outputs.size != '0'
         run: |
           rm -rf ./coverchecker && ln -s /var/local/env/coverchecker ./coverchecker && cd coverchecker && git pull
           time_count=0
@@ -167,6 +167,8 @@ jobs:
         run: |
           set -x
           rm -rf result
+          export JAVA_HOME=/var/local/env/jdk1.8.0_202;
+          export PATH=$JAVA_HOME/bin:$PATH;
           java -jar $package_path/jacococli.jar report ${fe_path}/merge.exec --classfiles ${fe_core_path}/target/classes/ \
             --html ./result --xml ${{ github.workspace }}/coverage.xml \
             --sourcefiles ${fe_core_path}/src/main/java/ --encoding utf-8 --name fe-coverage
