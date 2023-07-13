@@ -128,7 +128,7 @@ jobs:
           detailed_summary: true
           fail_on_failure: true
           commit: ${{ github.event.workflow_run.head_sha }}
-          report_paths: ./fe/fe-core/target/surefire-report/*.xml
+          report_paths: ./fe/fe-core/target/surefire-reports/*.xml
 
       # Incremental UT Coverage
       - name: Publish Incremental Coverage Report
@@ -151,11 +151,13 @@ jobs:
           done
 
       - name: Merge FE Coverage
-        if: github.event.workflow_run.conclusion == 'success' && steps.download-incremental-result.outputs.size != '0'
+        if: github.event.workflow_run.conclusion == 'success' && steps.download-ut-xml.outputs.size != '0'
         env:
           fe_path: ${{ github.workspace }}/fe
         run: |
           set -ex
+          export JAVA_HOME=/var/local/env/jdk1.8.0_202;
+          export PATH=$JAVA_HOME/bin:$PATH;
           rm -rf ./ci-tool && cp -rf /var/lib/ci-tool ./ci-tool && cd ci-tool && git pull && source lib/init.sh
           java -jar package/jacococli.jar merge ${fe_path}/fe-core/target/jacoco.exec ${fe_path}/test.exec --destfile ${fe_path}/merge.exec
 
@@ -164,6 +166,7 @@ jobs:
           package_path: ${{ github.workspace }}/ci-tool/package
           fe_path: ${{ github.workspace }}/fe
           fe_core_path: ${{ github.workspace }}/fe/fe-core
+        if: success()
         run: |
           set -x
           rm -rf result
@@ -175,6 +178,7 @@ jobs:
 
       # Incremental Total Coverage
       - name: Publish Incremental Coverage Report - Total
+        if: success()
         run: |
           cd coverchecker
           time_count=0
@@ -195,6 +199,7 @@ jobs:
       # total coverage
       - name: Coverage Report
         uses: codecov/codecov-action@v3
+        if: success()
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ${{ github.workspace }}/coverage.xml
@@ -202,7 +207,8 @@ jobs:
           name: fe-total
           fail_ci_if_error: false
           verbose: true
-          override_pr: ${PR_NUMBER}
+          override_pr: ${{ needs.INFO.outputs.PR_NUMBER }}
+          override_branch: ${{ needs.INFO.outputs.BASE_REF }}
 
   SQL-Tester-REPORT:
     runs-on: [ self-hosted, quick ]
