@@ -132,7 +132,7 @@ jobs:
 
       # Incremental UT Coverage
       - name: Publish Incremental Coverage Report
-        if: steps.download-incremental-result.outputs.size != '0'
+        if: steps.download-ut-xml.outputs.size != '0'
         run: |
           rm -rf ./coverchecker && ln -s /var/local/env/coverchecker ./coverchecker && cd coverchecker && git pull
           time_count=0
@@ -151,11 +151,13 @@ jobs:
           done
 
       - name: Merge FE Coverage
-        if: github.event.workflow_run.conclusion == 'success' && steps.download-incremental-result.outputs.size != '0'
+        if: github.event.workflow_run.conclusion == 'success' && steps.download-ut-xml.outputs.size != '0'
         env:
           fe_path: ${{ github.workspace }}/fe
         run: |
           set -ex
+          export JAVA_HOME=/var/local/env/jdk1.8.0_202;
+          export PATH=$JAVA_HOME/bin:$PATH;
           rm -rf ./ci-tool && cp -rf /var/lib/ci-tool ./ci-tool && cd ci-tool && git pull && source lib/init.sh
           java -jar package/jacococli.jar merge ${fe_path}/fe-core/target/jacoco.exec ${fe_path}/test.exec --destfile ${fe_path}/merge.exec
 
@@ -167,6 +169,8 @@ jobs:
         run: |
           set -x
           rm -rf result
+          export JAVA_HOME=/var/local/env/jdk1.8.0_202;
+          export PATH=$JAVA_HOME/bin:$PATH;
           java -jar $package_path/jacococli.jar report ${fe_path}/merge.exec --classfiles ${fe_core_path}/target/classes/ \
             --html ./result --xml ${{ github.workspace }}/coverage.xml \
             --sourcefiles ${fe_core_path}/src/main/java/ --encoding utf-8 --name fe-coverage
