@@ -119,6 +119,7 @@ jobs:
 
       - name: Publish UT Report
         uses: mikepenz/action-junit-report@v3
+        id: publish_report
         if: steps.download-ut-xml.outputs.size != '0'
         env:
           github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -130,28 +131,8 @@ jobs:
           commit: ${{ github.event.workflow_run.head_sha }}
           report_paths: ./fe/fe-core/target/surefire-reports/*.xml
 
-      # Incremental UT Coverage
-      - name: Publish Incremental Coverage Report
-        if: steps.download-ut-xml.outputs.size != '0'
-        run: |
-          rm -rf ./coverchecker && ln -s /var/local/env/coverchecker ./coverchecker && cd coverchecker && git pull
-          time_count=0
-          pull_status=1
-          export JAVA_HOME=/var/local/env/jdk1.8.0_202;
-          export PATH=$JAVA_HOME/bin:$PATH;
-          while (( $pull_status != 0 )); do
-            if (( $time_count == 3 )); then
-              exit 1
-            fi
-            timeout 180 java -jar cover-checker-console/target/cover-checker-console-1.4.0-jar-with-dependencies.jar \
-              --cover ${{ github.workspace }}/fe/fe-core/target/result/ --github-token ${{ secrets.PAT }} \
-              --repo ${{ github.repository }} --threshold 80 --github-url api.github.com --pr ${PR_NUMBER} -type jacoco
-            pull_status=$?
-            time_count=`expr $time_count + 1`
-          done
-
       - name: Merge FE Coverage
-        if: github.event.workflow_run.conclusion == 'success' && steps.download-ut-xml.outputs.size != '0'
+        if: steps.download-ut-xml.outputs.size != '0'
         env:
           fe_path: ${{ github.workspace }}/fe
         run: |
@@ -159,14 +140,18 @@ jobs:
           export JAVA_HOME=/var/local/env/jdk1.8.0_202;
           export PATH=$JAVA_HOME/bin:$PATH;
           rm -rf ./ci-tool && cp -rf /var/lib/ci-tool ./ci-tool && cd ci-tool && git pull && source lib/init.sh
-          java -jar package/jacococli.jar merge ${fe_path}/fe-core/target/jacoco.exec ${fe_path}/test.exec --destfile ${fe_path}/merge.exec
+          if [[ -e ${fe_path}/test.exec ]]; then
+            java -jar package/jacococli.jar merge ${fe_path}/fe-core/target/jacoco.exec ${fe_path}/test.exec --destfile ${fe_path}/merge.exec
+          else
+            cp ${fe_path}/fe-core/target/jacoco.exec ${fe_path}/merge.exec
+          fi
 
       - name: Generate XML Report
         env:
           package_path: ${{ github.workspace }}/ci-tool/package
           fe_path: ${{ github.workspace }}/fe
           fe_core_path: ${{ github.workspace }}/fe/fe-core
-        if: success()
+        if: steps.publish_report.outcome == 'success'
         run: |
           set -x
           rm -rf result
@@ -184,7 +169,7 @@ jobs:
       - name: Publish Incremental Coverage Report - Total
         if: success()
         run: |
-          cd coverchecker
+          rm -rf ./coverchecker && ln -s /var/local/env/coverchecker ./coverchecker && cd coverchecker && git pull
           time_count=0
           pull_status=1
           export JAVA_HOME=/var/local/env/jdk1.8.0_202;
