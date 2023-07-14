@@ -172,10 +172,13 @@ jobs:
           rm -rf result
           export JAVA_HOME=/var/local/env/jdk1.8.0_202;
           export PATH=$JAVA_HOME/bin:$PATH;
+          cd ${fe_core_path}/target/classes;
+          rm -rf com/starrocks/thrift/;
+          rm -rf com/starrocks/proto/;
+          cd ${{ github.workspace }};
           java -jar $package_path/jacococli.jar report ${fe_path}/merge.exec --classfiles ${fe_core_path}/target/classes/ \
             --html ./result --xml ${{ github.workspace }}/coverage.xml \
             --sourcefiles ${fe_core_path}/src/main/java/ --encoding utf-8 --name fe-coverage
-          
 
       # Incremental Total Coverage
       - name: Publish Incremental Coverage Report - Total
