@@ -175,6 +175,7 @@ jobs:
           java -jar $package_path/jacococli.jar report ${fe_path}/merge.exec --classfiles ${fe_core_path}/target/classes/ \
             --html ./result --xml ${{ github.workspace }}/coverage.xml \
             --sourcefiles ${fe_core_path}/src/main/java/ --encoding utf-8 --name fe-coverage
+          
 
       # Incremental Total Coverage
       - name: Publish Incremental Coverage Report - Total
@@ -195,6 +196,9 @@ jobs:
             pull_status=$?
             time_count=`expr $time_count + 1`
           done
+          rm -rf coverchecker
+          rm -rf ci-tools
+          rm -rf fe
 
       # total coverage
       - name: Coverage Report
