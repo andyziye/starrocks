@@ -160,6 +160,10 @@ jobs:
           cd ${fe_core_path}/target/classes;
           rm -rf com/starrocks/thrift/;
           rm -rf com/starrocks/proto/;
+          rm -rf org;
+          rm -rf com/starrocks/sql/parser;
+          rm -rf com/starrocks/builtins;
+          rm -rf com/starrocks/common/Version.class;
           cd ${{ github.workspace }};
           java -jar $package_path/jacococli.jar report ${fe_path}/merge.exec --classfiles ${fe_core_path}/target/classes/ \
             --html ./result --xml ${{ github.workspace }}/coverage.xml \
@@ -186,7 +190,6 @@ jobs:
           done
           rm -rf coverchecker
           rm -rf ci-tools
-          rm -rf fe
 
       # total coverage
       - name: Coverage Report
