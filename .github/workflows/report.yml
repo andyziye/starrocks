@@ -83,6 +83,7 @@ jobs:
 
       - name: PR DETAILS
         id: pr_details
+        if: always()
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ steps.pr_num_reader.outputs.content }}
