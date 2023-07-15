@@ -1,4 +1,4 @@
-comment: true
+comment: false
 codecov:
   allow_coverage_offsets: true
 github_checks:
