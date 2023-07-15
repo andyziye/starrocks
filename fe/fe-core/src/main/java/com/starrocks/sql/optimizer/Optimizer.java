@@ -53,7 +53,10 @@ import com.starrocks.sql.optimizer.rule.transformation.SemiReorderRule;
 import com.starrocks.sql.optimizer.rule.transformation.SeparateProjectRule;
 import com.starrocks.sql.optimizer.rule.transformation.SplitScanORToUnionRule;
 import com.starrocks.sql.optimizer.rule.transformation.materialization.MvUtils;
-import com.starrocks.sql.optimizer.rule.transformation.pruner.RBOTablePruneRule;
+import com.starrocks.sql.optimizer.rule.transformation.pruner.CboTablePruneRule;
+import com.starrocks.sql.optimizer.rule.transformation.pruner.PrimaryKeyUpdateTableRule;
+import com.starrocks.sql.optimizer.rule.transformation.pruner.RboTablePruneRule;
+import com.starrocks.sql.optimizer.rule.transformation.pruner.UniquenessBasedTablePruneRule;
 import com.starrocks.sql.optimizer.rule.tree.AddDecodeNodeForDictStringRule;
 import com.starrocks.sql.optimizer.rule.tree.CloneDuplicateColRefRule;
 import com.starrocks.sql.optimizer.rule.tree.ExchangeSortToMergeRule;
@@ -256,10 +259,14 @@ public class Optimizer {
             // projection before ReorderJoinRule's application, after that, we must separate operator's
             // projection as LogicalProjectionOperator from the operator by applying SeparateProjectRule.
             ruleRewriteIterative(tree, rootTaskContext, new MergeProjectWithChildRule());
+            tree = new UniquenessBasedTablePruneRule().rewrite(tree, rootTaskContext);
+            deriveLogicalProperty(tree);
             tree = new ReorderJoinRule().rewrite(tree, context);
             tree = new SeparateProjectRule().rewrite(tree, rootTaskContext);
             deriveLogicalProperty(tree);
-            tree = new RBOTablePruneRule().rewrite(tree, rootTaskContext);
+            tree = new PrimaryKeyUpdateTableRule().rewrite(tree, rootTaskContext);
+            deriveLogicalProperty(tree);
+            tree = new RboTablePruneRule().rewrite(tree, rootTaskContext);
             ruleRewriteIterative(tree, rootTaskContext, new MergeTwoProjectRule());
             rootTaskContext.setRequiredColumns(requiredColumns.clone());
             ruleRewriteOnlyOnce(tree, rootTaskContext, RuleSetType.PRUNE_COLUMNS);
@@ -486,7 +493,8 @@ public class Optimizer {
         OptExpression tree = memo.getRootGroup().extractLogicalTree();
         SessionVariable sessionVariable = connectContext.getSessionVariable();
         // add CboTablePruneRule
-        if (sessionVariable.isEnableCboTablePrune()) {
+        if (Utils.countJoinNodeSize(tree, CboTablePruneRule.JOIN_TYPES) < 10 &&
+                sessionVariable.isEnableCboTablePrune()) {
             context.getRuleSet().addCboTablePruneRule();
         }
         // Join reorder

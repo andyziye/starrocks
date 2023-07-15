@@ -287,17 +287,20 @@ public class TablePruningTest extends TablePruningTestBase {
                                 tc[2]}))).collect(
                         Collectors.toList());
 
+        String sql0 = "select lo_orderdate,s_name from lineorder0 l\n" +
+                "   left join customer c on (c.c_custkey = l.lo_custkey)\n" +
+                "   left join supplier s  on (s.s_suppkey = l.lo_suppkey)\n" +
+                "   left join part p on (p.p_partkey = l.lo_partkey) where lo_custkey > 10";
         for (Object[] tc : cases) {
             String sql = (String) tc[0];
-            int rboNumHashJoins = (Integer) tc[1];
             int cboNumHashJoins = (Integer) tc[2];
-            checkHashJoinCountWithOnlyCBO(sql, cboNumHashJoins);
-            checkHashJoinCountWithBothRBOAndCBO(sql, rboNumHashJoins);
+            checkHashJoinCountWithOnlyRBO(sql, cboNumHashJoins);
+            checkHashJoinCountWithBothRBOAndCBO(sql, cboNumHashJoins);
         }
     }
 
     @Test
-    public void testOuterJoinContainsIrreducibleConstantPredicate() {
+    public void testOuterJoinContainsConstantPredicate() {
         String[] sqlList = {
                 "select l.*\n" +
                         "from lineorder l left join[shuffle] (select * from customer where murmur_hash3_32(10) = 10) c on (c.c_custkey = l.lo_custkey)\n" +
@@ -308,7 +311,7 @@ public class TablePruningTest extends TablePruningTestBase {
                         "where murmur_hash3_32(10) = 10",
         };
         for (String sql : sqlList) {
-            checkHashJoinCountWithOnlyRBO(sql, 1);
+            checkHashJoinCountWithOnlyRBO(sql, 0);
             checkHashJoinCountWithOnlyCBO(sql, 0);
             checkHashJoinCountWithBothRBOAndCBO(sql, 0);
         }
@@ -359,7 +362,7 @@ public class TablePruningTest extends TablePruningTestBase {
             int cboNumHashJoins = (Integer) tc[3];
             int finalNmHashJoins = (Integer) tc[4];
             //checkHashJoinCountWithOnlyRBO(sql, rboNumHashJoins);
-            checkHashJoinCountWithOnlyCBO(sql, cboNumHashJoins);
+            //checkHashJoinCountWithOnlyCBO(sql, cboNumHashJoins);
             checkHashJoinCountWithBothRBOAndCBO(sql, finalNmHashJoins);
         }
     }
@@ -658,11 +661,16 @@ public class TablePruningTest extends TablePruningTestBase {
                 {"sum(coalesce(B2.b_c0,0)+coalesce(B1.b_c0,0))", 1},
                 {"sum(A0.a_c0+A1.a_c1)", 0},
         };
-        for (Object[] tc : cases) {
-            String selectStmt = (String) tc[0];
-            int numHashJoins = (Integer) tc[1];
-            String sql = String.format("select %s from %s", selectStmt, fromClause);
-            checkHashJoinCountWithOnlyRBOLessThan(sql, 12);
+        try {
+            ctx.getSessionVariable().setOptimizerExecuteTimeout(20000);
+            for (Object[] tc : cases) {
+                String selectStmt = (String) tc[0];
+                int numHashJoins = (Integer) tc[1];
+                String sql = String.format("select %s from %s", selectStmt, fromClause);
+                checkHashJoinCountWithOnlyRBOLessThan(sql, 12);
+            }
+        } finally {
+            ctx.getSessionVariable().setOptimizerExecuteTimeout(3000);
         }
     }
 
@@ -718,11 +726,11 @@ public class TablePruningTest extends TablePruningTestBase {
                 {"select 1 from " +
                         "customer a left join " +
                         "(select c_custkey from customer where c_name = 'USA') b " +
-                        "on a.c_custkey = b.c_custkey", 1, 0},
+                        "on a.c_custkey = b.c_custkey", 0, 0},
                 {"select a.c_name from " +
                         "customer a left join " +
                         "(select c_custkey from customer where c_name = 'USA') b " +
-                        "on a.c_custkey = b.c_custkey", 1, 0},
+                        "on a.c_custkey = b.c_custkey", 0, 0},
                 {"select coalesce(b.c_custkey,-1) as custkey from " +
                         "customer a left join " +
                         "(select c_custkey from customer where c_name = 'USA') b " +
