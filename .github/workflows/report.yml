@@ -217,12 +217,11 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ${{ github.workspace }}/coverage.xml
           dry_run: false
-          name: fe-total
+          name: fe-ut
           fail_ci_if_error: false
           verbose: true
           override_pr: ${{ needs.INFO.outputs.PR_NUMBER }}
           override_branch: ${{ needs.INFO.outputs.BASE_REF }}
-          override_commit: ${{ needs.INFO.outputs.HEAD_SHA }}
 
   SQL-Tester-REPORT:
     runs-on: [ self-hosted, quick ]
