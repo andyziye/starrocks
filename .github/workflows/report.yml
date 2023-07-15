@@ -110,7 +110,7 @@ jobs:
         run: |
           mkdir fe && cd fe
           oss_path=oss://${bucket_prefix}-ci-release/$branch/Release/pr/UT-Report/${PR_NUMBER}/
-          size=$(ossutil64 --config-file ~/.ossutilconfig du ${oss_path} | grep "total du size" | awk -F':' '{print $NF}')
+          size=$(ossutil64 --config-file ~/.ossutilconfig ls ${oss_path} | grep "Object Number is" | awk '{print $NF}')
           echo "size=${size}" >> $GITHUB_OUTPUT
           if [[ "$size" != "0" ]]; then
             ossutil64 --config-file ~/.ossutilconfig cp ${oss_path} . --recursive
@@ -231,7 +231,7 @@ jobs:
         run: |
           mkdir sql-tester-result && cd sql-tester-result
           oss_path=oss://${bucket_prefix}-ci-release/$branch/Release/pr/SQL-Tester-XML/${PR_NUMBER}/
-          size=$(ossutil64 --config-file ~/.ossutilconfig du ${oss_path} | grep "total du size" | awk -F':' '{print $NF}')
+          size=$(ossutil64 --config-file ~/.ossutilconfig ls ${oss_path} | grep "Object Number is" | awk '{print $NF}')
           echo "size=${size}" >> $GITHUB_OUTPUT
           if [[ "$size" != "0" ]]; then
             ossutil64 --config-file ~/.ossutilconfig cp ${oss_path} . --recursive
@@ -282,7 +282,7 @@ jobs:
         run: |
           mkdir admit-result && cd admit-result
           oss_path=oss://${bucket_prefix}-ci-release/$branch/Release/pr/Admit-XML/${PR_NUMBER}/
-          size=$(ossutil64 --config-file ~/.ossutilconfig du ${oss_path} | grep "total du size" | awk -F':' '{print $NF}')
+          size=$(ossutil64 --config-file ~/.ossutilconfig ls ${oss_path} | grep "Object Number is" | awk '{print $NF}')
           echo "size=${size}" >> $GITHUB_OUTPUT
           if [[ "$size" != "0" ]]; then
             ossutil64 --config-file ~/.ossutilconfig cp ${oss_path} . --recursive
