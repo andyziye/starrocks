@@ -27,7 +27,7 @@ jobs:
       github.event.workflow_run.event == 'pull_request'
     outputs:
       PR_NUMBER: ${{ steps.pr_details.outputs.PR_NUMBER }}
-      HEAD_REF: ${{ steps.pr_details.outputs.HEAD_REF }}
+      HEAD_SHA: ${{ steps.pr_details.outputs.HEAD_SHA }}
       BASE_REF: ${{ steps.pr_details.outputs.BASE_REF }}
       BASE_VERSION: ${{ steps.pr_details.outputs.BASE_VERSION }}
     steps:
@@ -45,7 +45,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           run_id: ${{ github.event.workflow_run.id }}
           workflow: test_fork.yml
-          name: 'head_ref'
+          name: 'head_sha'
 
       - name: Read the pr num file
         id: pr_num_reader
@@ -54,10 +54,10 @@ jobs:
           path: ./pr_num.txt
 
       - name: Read the pr head ref
-        id: head_ref_reader
+        id: head_sha_reader
         uses: juliangruber/read-file-action@v1
         with:
-          path: ./head_ref.txt
+          path: ./head_sha.txt
 
       - name: Download workflow artifact - BASE VERSION
         uses: dawidd6/action-download-artifact@v2.11.0
@@ -86,15 +86,15 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ steps.pr_num_reader.outputs.content }}
-          HEAD_REF: ${{ steps.head_ref_reader.outputs.content }}
+          HEAD_SHA: ${{ steps.head_sha_reader.outputs.content }}
           REPO: ${{ github.repository }}
         run: |
           PR_NUMBER=`echo ${PR_NUMBER}`
-          HEAD_REF=`echo ${HEAD_REF}`
+          HEAD_SHA=`echo ${HEAD_SHA}`
           base_ref=`gh pr view ${PR_NUMBER} -R ${REPO} --json baseRefName -q .baseRefName`
           echo "BASE_REF=${base_ref}" >> $GITHUB_OUTPUT
           echo "PR_NUMBER=${PR_NUMBER}" >> $GITHUB_OUTPUT
-          echo "HEAD_REF=${HEAD_REF}" >> $GITHUB_OUTPUT
+          echo "HEAD_SHA=${HEAD_SHA}" >> $GITHUB_OUTPUT
 
           if [[ ${{ steps.check_version_file_exist.outputs.is_exist }} == 'true' ]]; then
             base_version=`echo "${{ steps.base_version_reader.outputs.content }}"`
@@ -118,7 +118,6 @@ jobs:
         run: |
           repo="${{ github.repository }}"
           bucket_prefix=`echo ${repo%/*} | tr '[:upper:]' '[:lower:]'`
-          bucket_prefix=starrocks
           echo "bucket_prefix=${bucket_prefix}" >> $GITHUB_OUTPUT
 
       - name: Download FE UT XML
@@ -222,7 +221,7 @@ jobs:
           verbose: true
           override_pr: ${{ needs.INFO.outputs.PR_NUMBER }}
           override_branch: ${{ needs.INFO.outputs.BASE_REF }}
-          override_commit: ${{ needs.INFO.outputs.HEAD_REF }}
+          override_commit: ${{ needs.INFO.outputs.HEAD_SHA }}
 
   SQL-Tester-REPORT:
     runs-on: [ self-hosted, quick ]
@@ -240,7 +239,6 @@ jobs:
         run: |
           repo="${{ github.repository }}"
           bucket_prefix=`echo ${repo%/*} | tr '[:upper:]' '[:lower:]'`
-          bucket_prefix=starrocks
           echo "bucket_prefix=${bucket_prefix}" >> $GITHUB_OUTPUT
 
       - name: Download SQL-Tester XML
@@ -291,7 +289,6 @@ jobs:
         run: |
           repo="${{ github.repository }}"
           bucket_prefix=`echo ${repo%/*} | tr '[:upper:]' '[:lower:]'`
-          bucket_prefix=starrocks
           echo "bucket_prefix=${bucket_prefix}" >> $GITHUB_OUTPUT
 
       - name: Download Admit XML
