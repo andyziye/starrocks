@@ -31,8 +31,10 @@ jobs:
         env:
           PR_NUMBER: ${{ github.event.number }}
         run: |
+          set -x
           echo $PR_NUMBER > pr_num.txt
-          echo ${{ github.sha }} > head_sha.txt
+          GITHUB_SHA=$(cat $GITHUB_EVENT_PATH | jq -r .pull_request.head.sha)
+          echo ${GITHUB_SHA} > head_sha.txt
       - name: Upload the PR number
         uses: actions/upload-artifact@v2
         with:
@@ -501,6 +503,7 @@ jobs:
           echo "branch=${{github.base_ref}}" >> $GITHUB_OUTPUT
           repo="${{ github.repository }}"
           bucket_prefix=`echo ${repo%/*} | tr '[:upper:]' '[:lower:]'` 
+          bucket_prefix=starrocks
           echo "bucket_prefix=${bucket_prefix}" >> $GITHUB_OUTPUT
 
       - uses: actions/checkout@v3
@@ -568,6 +571,7 @@ jobs:
       - name: CLEAN
         run: |
           rm -rf ${{ github.workspace }} && mkdir -p ${{ github.workspace }}
+          exit 1;
 
       - name: BRANCH INFO
         id: branch
