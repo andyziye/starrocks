@@ -193,7 +193,7 @@ jobs:
           verbose: true
           override_pr: ${{ needs.INFO.outputs.PR_NUMBER }}
           override_branch: ${{ needs.INFO.outputs.BASE_REF }}
-#           override_commit: ${{ needs.INFO.outputs.HEAD_SHA }}
+          override_commit: ${{ needs.INFO.outputs.HEAD_SHA }}
 
   SQL-Tester-REPORT:
     runs-on: [ self-hosted, quick ]
