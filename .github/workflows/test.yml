@@ -62,7 +62,7 @@ jobs:
                   },
                   {
                     headers: {
-                      Authorization: `Bearer ${token}`,
+                      Authorization: `token ${token}`,
                       'Content-Type': 'application/json',
                       Accept: 'application/vnd.github.v3+json',
                     },
