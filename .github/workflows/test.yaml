@@ -1,0 +1,68 @@
+name: Test Report Check
+on:
+  pull_request_target:
+    types:
+      - opened
+      - reopened
+      - synchronize
+
+jobs:
+  build:
+    name: Check Pull Request
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.PAT }}
+    steps:
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run checks and tests
+        run: npm test
+
+      - name: Publish Check Status
+        uses: actions/github-script@v5
+        with:
+          script: |
+            const axios = require('axios');
+
+            const token = process.env.GITHUB_TOKEN;
+            const prNumber = process.env.PR_NUMBER || process.env.PULL_REQUEST_NUMBER;
+            const checkName = 'My Check Name';
+            const checkHeadSHA = process.env.GITHUB_SHA;
+
+            async function createCheck() {
+              try {
+                const response = await axios.post(
+                  `https://api.github.com/repos/${process.env.GITHUB_REPOSITORY}/check-runs`,
+                  {
+                    name: checkName,
+                    head_sha: checkHeadSHA,
+                    status: 'completed',
+                    conclusion: 'success',
+                    output: {
+                      title: 'Check Result',
+                      summary: 'All checks passed!',
+                    },
+                  },
+                  {
+                    headers: {
+                      Authorization: `Bearer ${token}`,
+                      'Content-Type': 'application/json',
+                      Accept: 'application/vnd.github.v3+json',
+                    },
+                  }
+                );
+
+                console.log(response.data);
+              } catch (error) {
+                console.error('Error creating check:', error.response.data);
+              }
+            }
+
+            createCheck();
+            
