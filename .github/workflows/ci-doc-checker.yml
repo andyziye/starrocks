@@ -98,6 +98,7 @@ jobs:
       - name: Get Body
         id: body
         run: |
+          set -x
           body=$(gh pr view ${PR_NUMBER} -R ${REPO} --json body -q .body)
           body=${body//"[x] Yes, this PR will result in a change in behavior."/"[ ] Yes, this PR will result in a change in behavior."}
           body=${body//"[ ] No, this PR will not result in a change in behavior."/"[x] No, this PR will not result in a change in behavior."}
