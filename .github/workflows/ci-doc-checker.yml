@@ -102,7 +102,7 @@ jobs:
           body=$(gh pr view ${PR_NUMBER} -R ${REPO} --json body -q .body)
           body=${body//"[x] Yes, this PR will result in a change in behavior."/"[ ] Yes, this PR will result in a change in behavior."}
           body=${body//"[ ] No, this PR will not result in a change in behavior."/"[x] No, this PR will not result in a change in behavior."}
-          gh pr edit ${PR_NUMBER} -R ${REPO} -b $body
+          gh pr edit ${PR_NUMBER} -R ${REPO} -b "$body"
           
       # - name: Replace Pull Request Body
       #   uses: ivangabriele/find-and-replace-pull-request-body@v1.1.5
