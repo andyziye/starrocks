@@ -1,0 +1,15 @@
+name: TEST PIPELINE
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+
+jobs:
+
+  checker:
+    runs-on: ubuntu-latest
+    name: RUN CHECKER
+    run: |
+        echo "True"
