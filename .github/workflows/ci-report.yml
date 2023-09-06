@@ -1,5 +1,5 @@
 name: TEST Report
-run-name: TEST Report - ${{ github.event.workflow_run.pull_requests[0].number }}
+run-name: TEST Report(#${{ github.event.workflow_run.pull_requests[0].number }})
 
 on:
   workflow_run:
