@@ -11,5 +11,7 @@ jobs:
   checker:
     runs-on: ubuntu-latest
     name: RUN CHECKER
-    run: |
-        echo "True"
+    steps:
+      - name: A
+        run: |
+          echo "True"
