@@ -1,4 +1,4 @@
-name: CI Report - ${{ github.event.workflow_run.pull_requests[0].number }}
+name: CI Report - ${{ github.event_name }}
 
 on:
   workflow_run:
@@ -27,4 +27,7 @@ jobs:
       - name: ECHO
         run: |
           echo ${{ github.event.workflow_run.pull_requests[0].number }}
+
+      - name: Set Workflow Name
+        run: echo "::set-env name=WORKFLOW_NAME::Your Workflow - A"
 
