@@ -35,6 +35,7 @@ jobs:
           echo ${{ env.PR_NUMBER }}
           echo ${BASE_REF}
           echo ${HEAD_SHA}
+          echo "${{ toJson(github.event) }}"
 
       - name: add document label
         uses: actions-ecosystem/action-add-labels@v1
