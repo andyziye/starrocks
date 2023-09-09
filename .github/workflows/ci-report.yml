@@ -1,5 +1,5 @@
 name: TEST Report
-run-name: TEST Report(${{ github.event.workflow_run.id }}-#${{ github.event.workflow_run.head_sha:0:7 }})
+run-name: TEST Report((# ${{ github.event.workflow_run.id }}))
 
 on:
   workflow_run:
