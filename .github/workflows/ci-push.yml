@@ -1,0 +1,17 @@
+name: CI-SONARCLOUD-FE-MERGE
+
+on:
+  push:
+    branches:
+      - main
+      - 'branch-[0-9].[0-9]'
+    paths:
+      - 'fe/**.java'
+      - 'fe/**.xml'
+
+jobs:
+  sonarcloud-fe:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "1"
