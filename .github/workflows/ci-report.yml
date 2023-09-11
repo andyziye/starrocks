@@ -53,7 +53,7 @@ jobs:
           fi
 
       - name: Publish UT Report
-        uses: mikepenz/action-junit-report@v4
+        uses: mikepenz/action-junit-report@v3
         id: publish_report
         if: steps.download-ut-xml.outputs.size != '0'
         env:
