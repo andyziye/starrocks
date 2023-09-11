@@ -1,5 +1,5 @@
 name: TEST Report
-run-name: TEST Report((# ${{ github.event.workflow_run.id }}))
+run-name: TEST Report(# ${{ github.event.workflow_run.id }})
 
 on:
   workflow_run:
@@ -28,11 +28,6 @@ permissions:
 jobs:
   FE-REPORT:
     runs-on: [ self-hosted, quick ]
-    needs: INFO
-    if: needs.INFO.outputs.PR_NUMBER != ''
-    env:
-      PR_NUMBER: ${{ needs.INFO.outputs.PR_NUMBER }}
-      BASE_REF: ${{ needs.INFO.outputs.BASE_REF }}
     steps:
       - name: CLEAN
         run: |
