@@ -85,7 +85,8 @@ jobs:
         if: github.base_ref != 'main' && contains(toJson(github.event.pull_request.body), '[x] This is a backport pr')
         run: |
           PR_TITLE=$(echo "${{ github.event.pull_request.title }}")
-          if [[ ! $PR_TITLE =~ "\(backport #[0-9]+)$" ]]; then
+          count=$(echo $PR_TITLE | grep -E '\(backport #[0-9]+)$' | wc -l)
+          if [[ $count -le 0 ]]; then
             echo "::error::Backport PR title is not valid. It should end with '(backport #[0-9]+)'"
             exit 1
           fi
