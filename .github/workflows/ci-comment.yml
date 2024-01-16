@@ -1,0 +1,38 @@
+name: CI COMMENT TOOLS
+
+on:
+  issue_comment:
+    types: [ created ]
+
+permissions:
+  checks: write
+  actions: write
+  contents: write
+  deployments: write
+  discussions: write
+  issues: write
+  packages: write
+  pages: write
+  pull-requests: write
+  repository-projects: write
+  security-events: write
+  statuses: write
+
+jobs:
+
+  close:
+    name: CLOSE PR
+    runs-on: ubuntu-latest
+    if: >
+      ${{ github.event.issue.pull_request }} &&
+      (contains(github.event.comment.body, '@Mergify close') ||
+      contains(github.event.comment.body, '@Mergifyio close'))
+
+    env:
+      PR_NUMBER: ${{ github.event.issue.number }}
+      
+
+    steps:
+      - name: CLOSE
+        run: |
+          echo "YES"
