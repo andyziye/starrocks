@@ -36,3 +36,5 @@ jobs:
       - name: CLOSE
         run: |
           echo "YES"
+          cat ${GITHUB_EVENT_PATH}
+          
