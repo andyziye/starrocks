@@ -23,38 +23,9 @@ jobs:
   close1:
     runs-on: ubuntu-latest
     if: >
-      ${{ github.event.issue.pull_request }} &&
-      (contains(github.event.comment.body, 'close') ||
-      contains(github.event.comment.body, 'xclose'))
-
-    env:
-      PR_NUMBER: ${{ github.event.issue.number }}
-      
-
-    steps:
-      - name: CLOSE
-        run: |
-          echo "YES"
-          cat ${GITHUB_EVENT_PATH}
-
-  close2:
-    runs-on: ubuntu-latest
-    if: >
-      contains(github.event.comment.body, 'close')
-
-    env:
-      PR_NUMBER: ${{ github.event.issue.number }}
-      
-
-    steps:
-      - name: CLOSE
-        run: |
-          echo "YES"
-          cat ${GITHUB_EVENT_PATH}
-
-  close3:
-    runs-on: ubuntu-latest
-    if: contains(github.event.comment.body, 'xclose')
+      contains(github.event.issue.pull_request.html_url, 'pull') &&
+      (contains(github.event.comment.body, '@Mergify close') ||
+      contains(github.event.comment.body, '@Mergifyio close'))
 
     env:
       PR_NUMBER: ${{ github.event.issue.number }}
