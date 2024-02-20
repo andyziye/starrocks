@@ -48,7 +48,7 @@ ParquetReaderWrap::ParquetReaderWrap(std::shared_ptr<arrow::io::RandomAccessFile
     _parquet = std::move(parquet_file);
     _properties = parquet::ReaderProperties();
     _properties.enable_buffered_stream();
-    _properties.set_buffer_size(8 * 1024 * 1024);
+    _properties.set_buffer_size(1 * 1024 * 1024);
     _filename = (reinterpret_cast<ParquetChunkFile*>(_parquet.get()))->filename();
 }
 
@@ -90,9 +90,10 @@ Status ParquetReaderWrap::_init_parquet_reader() {
                                                    parquet::ParquetFileReader::Open(_parquet, _properties),
                                                    arrow_reader_properties, &_reader);
         if (!st.ok()) {
-            LOG(WARNING) << "Failed to create parquet file reader. error: " << st.ToString()
-                         << ", filename: " << _filename;
-            return Status::InternalError(fmt::format("Failed to create file reader. filename: {}", _filename));
+            std::ostringstream oss;
+            oss << "Failed to create parquet file reader. error: " << st.ToString() << ", filename: " << _filename;
+            LOG(INFO) << oss.str();
+            return Status::InternalError(oss.str());
         }
 
         if (!_reader || !_reader->parquet_reader()) {
@@ -370,15 +371,16 @@ arrow::Result<int64_t> ParquetChunkFile::Read(int64_t nbytes, void* buffer) {
 arrow::Result<int64_t> ParquetChunkFile::ReadAt(int64_t position, int64_t nbytes, void* out) {
     _pos += nbytes;
     auto status = _file->read_at_fully(position, out, nbytes);
-    return status.ok() ? nbytes
-                       : arrow::Result<int64_t>(arrow::Status(arrow::StatusCode::IOError, status.get_error_msg()));
+    return status.ok()
+                   ? nbytes
+                   : arrow::Result<int64_t>(arrow::Status(arrow::StatusCode::IOError, std::string(status.message())));
 }
 
 arrow::Result<int64_t> ParquetChunkFile::GetSize() {
     const StatusOr<uint64_t> status_or = _file->get_size();
     return status_or.ok() ? status_or.value()
-                          : arrow::Result<int64_t>(
-                                    arrow::Status(arrow::StatusCode::IOError, status_or.status().get_error_msg()));
+                          : arrow::Result<int64_t>(arrow::Status(arrow::StatusCode::IOError,
+                                                                 std::string(status_or.status().message())));
 }
 
 arrow::Status ParquetChunkFile::Seek(int64_t position) {

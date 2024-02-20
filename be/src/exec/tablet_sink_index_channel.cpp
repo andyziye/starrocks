@@ -16,10 +16,12 @@
 
 #include "column/chunk.h"
 #include "column/column_helper.h"
+#include "column/column_viewer.h"
 #include "column/nullable_column.h"
 #include "common/statusor.h"
 #include "config.h"
 #include "exec/tablet_sink.h"
+#include "exprs/expr_context.h"
 #include "gutil/strings/fastmem.h"
 #include "gutil/strings/join.h"
 #include "gutil/strings/substitute.h"
@@ -34,8 +36,8 @@
 namespace starrocks::stream_load {
 
 class OlapTableSink; // forward declaration
-NodeChannel::NodeChannel(OlapTableSink* parent, int64_t node_id, bool is_incremental)
-        : _parent(parent), _node_id(node_id), _is_incremental(is_incremental) {
+NodeChannel::NodeChannel(OlapTableSink* parent, int64_t node_id, bool is_incremental, ExprContext* where_clause)
+        : _parent(parent), _node_id(node_id), _is_incremental(is_incremental), _where_clause(where_clause) {
     // restrict the chunk memory usage of send queue & brpc write buffer
     _mem_tracker = std::make_unique<MemTracker>(config::send_channel_buffer_limit, "", nullptr);
     _ts_profile = _parent->ts_profile();
@@ -174,7 +176,7 @@ void NodeChannel::_open(int64_t index_id, RefCountClosure<PTabletWriterOpenResul
     request.set_table_id(_parent->_schema->table_id());
     request.set_is_incremental(incremental_open);
     request.set_sender_id(_parent->_sender_id);
-    request.set_min_immutable_tablet_size(_parent->_automatic_bucket_size);
+    request.set_immutable_tablet_size(_parent->_automatic_bucket_size);
     for (auto& tablet : tablets) {
         auto ptablet = request.add_tablets();
         ptablet->CopyFrom(tablet);
@@ -219,9 +221,9 @@ void NodeChannel::_open(int64_t index_id, RefCountClosure<PTabletWriterOpenResul
         brpc_addr.hostname = _node_info->host;
         brpc_addr.port = _node_info->brpc_port;
         open_closure->cntl.http_request().set_content_type("application/proto");
-        auto res = BrpcStubCache::create_http_stub(brpc_addr);
+        auto res = HttpBrpcStubCache::getInstance()->get_http_stub(brpc_addr);
         if (!res.ok()) {
-            LOG(ERROR) << res.status().get_error_msg();
+            LOG(ERROR) << res.status().message();
             return;
         }
         res.value()->tablet_writer_open(&open_closure->cntl, &request, &open_closure->result, open_closure);
@@ -335,10 +337,16 @@ Status NodeChannel::_serialize_chunk(const Chunk* src, ChunkPB* dst) {
     {
         SCOPED_RAW_TIMER(&_serialize_batch_ns);
         StatusOr<ChunkPB> res = Status::OK();
-        TRY_CATCH_BAD_ALLOC(res = serde::ProtobufChunkSerde::serialize(*src));
-        if (!res.ok()) {
+        // This lambda is to get the result of TRY_CATCH_ALLOC_SCOPE_END()
+        auto st = [&]() {
+            TRY_CATCH_ALLOC_SCOPE_START()
+            res = serde::ProtobufChunkSerde::serialize(*src);
+            return res.status();
+            TRY_CATCH_ALLOC_SCOPE_END()
+        }();
+        if (!st.ok()) {
             _cancelled = true;
-            _err_st = res.status();
+            _err_st = st;
             return _err_st;
         }
         res->Swap(dst);
@@ -401,7 +409,7 @@ bool NodeChannel::is_full() {
 
 Status NodeChannel::add_chunk(Chunk* input, const std::vector<int64_t>& tablet_ids,
                               const std::vector<uint32_t>& indexes, uint32_t from, uint32_t size) {
-    if (_cancelled || _send_finished) {
+    if (_cancelled || _closed) {
         return _err_st;
     }
 
@@ -419,10 +427,21 @@ Status NodeChannel::add_chunk(Chunk* input, const std::vector<int64_t>& tablet_i
 
     SCOPED_TIMER(_ts_profile->pack_chunk_timer);
     // 1. append data
-    _cur_chunk->append_selective(*input, indexes.data(), from, size);
-    auto req = _rpc_request.mutable_requests(0);
-    for (size_t i = 0; i < size; ++i) {
-        req->add_tablet_ids(tablet_ids[indexes[from + i]]);
+    if (_where_clause == nullptr) {
+        _cur_chunk->append_selective(*input, indexes.data(), from, size);
+        auto req = _rpc_request.mutable_requests(0);
+        for (size_t i = 0; i < size; ++i) {
+            req->add_tablet_ids(tablet_ids[indexes[from + i]]);
+        }
+    } else {
+        std::vector<uint32_t> filtered_indexes;
+        RETURN_IF_ERROR(_filter_indexes_with_where_expr(input, indexes, filtered_indexes));
+        size_t filter_size = filtered_indexes.size();
+        _cur_chunk->append_selective(*input, filtered_indexes.data(), from, filter_size);
+        auto req = _rpc_request.mutable_requests(0);
+        for (size_t i = 0; i < filter_size; ++i) {
+            req->add_tablet_ids(tablet_ids[filtered_indexes[from + i]]);
+        }
     }
 
     if (_cur_chunk->num_rows() < _runtime_state->chunk_size()) {
@@ -450,7 +469,7 @@ Status NodeChannel::add_chunk(Chunk* input, const std::vector<int64_t>& tablet_i
 
 Status NodeChannel::add_chunks(Chunk* input, const std::vector<std::vector<int64_t>>& index_tablet_ids,
                                const std::vector<uint32_t>& indexes, uint32_t from, uint32_t size) {
-    if (_cancelled || _send_finished) {
+    if (_cancelled || _closed) {
         return _err_st;
     }
 
@@ -500,8 +519,29 @@ Status NodeChannel::add_chunks(Chunk* input, const std::vector<std::vector<int64
     return _send_request(false);
 }
 
-Status NodeChannel::_send_request(bool eos, bool wait_all_sender_close) {
-    if (eos) {
+Status NodeChannel::_filter_indexes_with_where_expr(Chunk* input, const std::vector<uint32_t>& indexes,
+                                                    std::vector<uint32_t>& filtered_indexes) {
+    DCHECK(_where_clause != nullptr);
+    // Filter data
+    ASSIGN_OR_RETURN(ColumnPtr filter_col, _where_clause->evaluate(input))
+
+    size_t size = filter_col->size();
+    Buffer<uint8_t> filter(size, 0);
+    ColumnViewer<TYPE_BOOLEAN> col(filter_col);
+    for (size_t i = 0; i < size; ++i) {
+        filter[i] = !col.is_null(i) && col.value(i);
+    }
+
+    for (auto index : indexes) {
+        if (filter[index]) {
+            filtered_indexes.emplace_back(index);
+        }
+    }
+    return Status::OK();
+}
+
+Status NodeChannel::_send_request(bool eos, bool finished) {
+    if (eos || finished) {
         if (_request_queue.empty()) {
             if (_cur_chunk.get() == nullptr) {
                 _cur_chunk = std::make_unique<Chunk>();
@@ -514,6 +554,7 @@ Status NodeChannel::_send_request(bool eos, bool wait_all_sender_close) {
         // try to send chunk in queue first
         if (_request_queue.size() > 1) {
             eos = false;
+            finished = false;
         }
     }
 
@@ -534,9 +575,6 @@ Status NodeChannel::_send_request(bool eos, bool wait_all_sender_close) {
         if (UNLIKELY(eos)) {
             req->set_eos(true);
 
-            if (wait_all_sender_close) {
-                req->set_wait_all_sender_close(true);
-            }
             auto& partition_ids = _parent->_index_id_partition_ids[req->index_id()];
             if (!partition_ids.empty()) {
                 VLOG(2) << "partition_ids:" << std::string(partition_ids.begin(), partition_ids.end());
@@ -546,7 +584,15 @@ Status NodeChannel::_send_request(bool eos, bool wait_all_sender_close) {
             }
 
             // eos request must be the last request
-            _send_finished = true;
+            _closed = true;
+        }
+
+        // This is added for automatic partition. We need to ensure that
+        // all data has been sent before the incremental channel is closed.
+        if (UNLIKELY(finished)) {
+            req->set_wait_all_sender_close(true);
+
+            _finished = true;
         }
 
         req->set_packet_seq(_next_packet_seq);
@@ -573,7 +619,7 @@ Status NodeChannel::_send_request(bool eos, bool wait_all_sender_close) {
             brpc_addr.hostname = _node_info->host;
             brpc_addr.port = _node_info->brpc_port;
             _add_batch_closures[_current_request_index]->cntl.http_request().set_content_type("application/proto");
-            auto res = BrpcStubCache::create_http_stub(brpc_addr);
+            auto res = HttpBrpcStubCache::getInstance()->get_http_stub(brpc_addr);
             if (!res.ok()) {
                 return res.status();
             }
@@ -593,7 +639,7 @@ Status NodeChannel::_send_request(bool eos, bool wait_all_sender_close) {
             brpc_addr.hostname = _node_info->host;
             brpc_addr.port = _node_info->brpc_port;
             _add_batch_closures[_current_request_index]->cntl.http_request().set_content_type("application/proto");
-            auto res = BrpcStubCache::create_http_stub(brpc_addr);
+            auto res = HttpBrpcStubCache::getInstance()->get_http_stub(brpc_addr);
             if (!res.ok()) {
                 return res.status();
             }
@@ -784,13 +830,30 @@ Status NodeChannel::_wait_one_prev_request() {
     return Status::OK();
 }
 
-Status NodeChannel::try_close(bool wait_all_sender_close) {
-    if (_cancelled || _send_finished) {
+Status NodeChannel::try_close() {
+    if (_cancelled || _closed) {
         return _err_st;
     }
 
     if (_check_prev_request_done()) {
-        auto st = _send_request(true /* eos */, wait_all_sender_close);
+        auto st = _send_request(true /* eos */, false /* finished */);
+        if (!st.ok()) {
+            _cancelled = true;
+            _err_st = st;
+            return _err_st;
+        }
+    }
+
+    return Status::OK();
+}
+
+Status NodeChannel::try_finish() {
+    if (_cancelled || _finished || _closed) {
+        return _err_st;
+    }
+
+    if (_check_prev_request_done()) {
+        auto st = _send_request(false /* eos */, true /* finished */);
         if (!st.ok()) {
             _cancelled = true;
             _err_st = st;
@@ -802,7 +865,11 @@ Status NodeChannel::try_close(bool wait_all_sender_close) {
 }
 
 bool NodeChannel::is_close_done() {
-    return (_send_finished && _check_all_prev_request_done()) || _cancelled;
+    return (_closed && _check_all_prev_request_done()) || _cancelled;
+}
+
+bool NodeChannel::is_finished() {
+    return (_finished && _check_all_prev_request_done()) || _cancelled;
 }
 
 Status NodeChannel::close_wait(RuntimeState* state) {
@@ -811,7 +878,7 @@ Status NodeChannel::close_wait(RuntimeState* state) {
     }
 
     // 1. send eos request to commit write util finish
-    while (!_send_finished) {
+    while (!_closed) {
         RETURN_IF_ERROR(_send_request(true /* eos */));
     }
 
@@ -844,6 +911,8 @@ Status NodeChannel::close_wait(RuntimeState* state) {
 }
 
 void NodeChannel::cancel(const Status& err_st) {
+    if (_cancel_finished) return;
+
     // cancel rpc request, accelerate the release of related resources
     for (auto closure : _add_batch_closures) {
         closure->cancel();
@@ -852,6 +921,12 @@ void NodeChannel::cancel(const Status& err_st) {
     for (int i = 0; i < _rpc_request.requests_size(); i++) {
         _cancel(_rpc_request.requests(i).index_id(), err_st);
     }
+
+    _cancel_finished = true;
+}
+
+void NodeChannel::cancel() {
+    cancel(_err_st);
 }
 
 void NodeChannel::_cancel(int64_t index_id, const Status& err_st) {
@@ -873,7 +948,11 @@ void NodeChannel::_cancel(int64_t index_id, const Status& err_st) {
     request.release_id();
 }
 
-IndexChannel::~IndexChannel() = default;
+IndexChannel::~IndexChannel() {
+    if (_where_clause != nullptr) {
+        _where_clause->close(_parent->_state);
+    }
+}
 
 Status IndexChannel::init(RuntimeState* state, const std::vector<PTabletWithPartition>& tablets, bool is_incremental) {
     for (const auto& tablet : tablets) {
@@ -882,11 +961,13 @@ Status IndexChannel::init(RuntimeState* state, const std::vector<PTabletWithPart
             auto msg = fmt::format("Not found tablet: {}", tablet.tablet_id());
             return Status::NotFound(msg);
         }
-        for (auto& node_id : location->node_ids) {
+        auto node_ids_size = location->node_ids.size();
+        for (size_t i = 0; i < node_ids_size; ++i) {
+            auto& node_id = location->node_ids[i];
             NodeChannel* channel = nullptr;
             auto it = _node_channels.find(node_id);
             if (it == std::end(_node_channels)) {
-                auto channel_ptr = std::make_unique<NodeChannel>(_parent, node_id, is_incremental);
+                auto channel_ptr = std::make_unique<NodeChannel>(_parent, node_id, is_incremental, _where_clause);
                 channel = channel_ptr.get();
                 _node_channels.emplace(node_id, std::move(channel_ptr));
                 if (is_incremental) {
@@ -896,16 +977,35 @@ Status IndexChannel::init(RuntimeState* state, const std::vector<PTabletWithPart
                 channel = it->second.get();
             }
             channel->add_tablet(_index_id, tablet);
+            if (_parent->_enable_replicated_storage && i == 0) {
+                channel->set_has_primary_replica(true);
+            }
         }
     }
     for (auto& it : _node_channels) {
         RETURN_IF_ERROR(it.second->init(state));
     }
+    if (_where_clause != nullptr) {
+        RETURN_IF_ERROR(_where_clause->prepare(_parent->_state));
+        RETURN_IF_ERROR(_where_clause->open(_parent->_state));
+    }
     _write_quorum_type = _parent->_write_quorum_type;
     return Status::OK();
 }
 
+void IndexChannel::mark_as_failed(const NodeChannel* ch) {
+    // primary replica use for replicated storage
+    // if primary replica failed, we should mark this index as failed
+    if (ch->has_primary_replica()) {
+        _has_intolerable_failure = true;
+    }
+    _failed_channels.insert(ch->node_id());
+}
+
 bool IndexChannel::has_intolerable_failure() {
+    if (_has_intolerable_failure) {
+        return _has_intolerable_failure;
+    }
     if (_write_quorum_type == TWriteQuorumType::ALL) {
         return _failed_channels.size() > 0;
     } else if (_write_quorum_type == TWriteQuorumType::ONE) {

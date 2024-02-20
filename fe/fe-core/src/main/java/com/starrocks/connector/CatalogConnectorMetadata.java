@@ -26,6 +26,7 @@ import com.starrocks.common.DdlException;
 import com.starrocks.common.MetaNotFoundException;
 import com.starrocks.common.Pair;
 import com.starrocks.common.UserException;
+import com.starrocks.common.profile.Tracers;
 import com.starrocks.connector.informationschema.InformationSchemaMetadata;
 import com.starrocks.credential.CloudConfiguration;
 import com.starrocks.sql.ast.AddPartitionClause;
@@ -81,6 +82,11 @@ public class CatalogConnectorMetadata implements ConnectorMetadata {
     }
 
     @Override
+    public Table.TableType getTableType() {
+        return normal.getTableType();
+    }
+
+    @Override
     public List<String> listDbNames() {
         return ImmutableList.<String>builder()
                 .addAll(this.normal.listDbNames())
@@ -112,6 +118,12 @@ public class CatalogConnectorMetadata implements ConnectorMetadata {
     }
 
     @Override
+    public boolean tableExists(String dbName, String tblName) {
+        ConnectorMetadata metadata = metadataOfDb(dbName);
+        return metadata.tableExists(dbName, tblName);
+    }
+
+    @Override
     public Pair<Table, MaterializedIndexMeta> getMaterializedViewIndex(String dbName, String tblName) {
         return normal.getMaterializedViewIndex(dbName, tblName);
     }
@@ -123,6 +135,11 @@ public class CatalogConnectorMetadata implements ConnectorMetadata {
     }
 
     @Override
+    public boolean prepareMetadata(MetaPreparationItem item, Tracers tracers) {
+        return normal.prepareMetadata(item, tracers);
+    }
+
+    @Override
     public List<PartitionInfo> getPartitions(Table table, List<String> partitionNames) {
         return normal.getPartitions(table, partitionNames);
     }
@@ -131,6 +148,11 @@ public class CatalogConnectorMetadata implements ConnectorMetadata {
     public Statistics getTableStatistics(OptimizerContext session, Table table, Map<ColumnRefOperator, Column> columns,
                                          List<PartitionKey> partitionKeys, ScalarOperator predicate, long limit) {
         return normal.getTableStatistics(session, table, columns, partitionKeys, predicate, limit);
+    }
+
+    @Override
+    public List<PartitionKey> getPrunedPartitions(Table table, ScalarOperator predicate, long limit) {
+        return normal.getPrunedPartitions(table, predicate, limit);
     }
 
     @Override
@@ -183,6 +205,11 @@ public class CatalogConnectorMetadata implements ConnectorMetadata {
     @Override
     public void finishSink(String dbName, String table, List<TSinkCommitInfo> commitInfos) {
         normal.finishSink(dbName, table, commitInfos);
+    }
+
+    @Override
+    public void abortSink(String dbName, String table, List<TSinkCommitInfo> commitInfos) {
+        normal.abortSink(dbName, table, commitInfos);
     }
 
     @Override
@@ -271,5 +298,10 @@ public class CatalogConnectorMetadata implements ConnectorMetadata {
     @Override
     public CloudConfiguration getCloudConfiguration() {
         return normal.getCloudConfiguration();
+    }
+
+    @Override
+    public List<PartitionInfo> getChangedPartitionInfo(Table table, long mvSnapShotID) {
+        return normal.getChangedPartitionInfo(table, mvSnapShotID);
     }
 }

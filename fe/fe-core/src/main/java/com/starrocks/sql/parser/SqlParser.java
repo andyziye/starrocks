@@ -50,6 +50,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.StringJoiner;
+import java.util.stream.Collectors;
 
 import static com.starrocks.sql.common.ErrorMsgProxy.PARSER_ERROR_MSG;
 
@@ -102,7 +103,11 @@ public class SqlParser {
         List<StarRocksParser.SingleStatementContext> singleStatementContexts =
                 parser.sqlStatements().singleStatement();
         for (int idx = 0; idx < singleStatementContexts.size(); ++idx) {
-            AstBuilder astBuilder = new AstBuilder(sessionVariable.getSqlMode());
+            // collect hint info
+            HintCollector collector = new HintCollector((CommonTokenStream) parser.getTokenStream(), sessionVariable);
+            collector.collect(singleStatementContexts.get(idx));
+
+            AstBuilder astBuilder = new AstBuilder(sessionVariable.getSqlMode(), collector.getContextWithHintMap());
             StatementBase statement = (StatementBase) astBuilder.visitSingleStatement(singleStatementContexts.get(idx));
             if (astBuilder.getParameters() != null && astBuilder.getParameters().size() != 0
                     && !(statement instanceof PrepareStmt)) {
@@ -112,9 +117,6 @@ public class SqlParser {
                 statement.setOrigStmt(new OriginStatement(sql, idx));
             }
             statements.add(statement);
-        }
-        if (ConnectContext.get() != null) {
-            ConnectContext.get().setRelationAliasCaseInSensitive(false);
         }
         return statements;
     }
@@ -163,6 +165,15 @@ public class SqlParser {
 
         return (Expr) new AstBuilder(sqlMode)
                 .visit(parserBuilder(expressionSql, sessionVariable).expressionSingleton().expression());
+    }
+
+    public static List<Expr> parseSqlToExprs(String expressions, SessionVariable sessionVariable) {
+        List<StarRocksParser.ExpressionContext> expressionContexts =
+                parserBuilder(expressions, sessionVariable).expressionList().expression();
+        AstBuilder astBuilder = new AstBuilder(sessionVariable.getSqlMode());
+        return expressionContexts.stream()
+                .map(e -> (Expr) astBuilder.visit(e))
+                .collect(Collectors.toList());
     }
 
     public static ImportColumnsStmt parseImportColumns(String expressionSql, long sqlMode) {

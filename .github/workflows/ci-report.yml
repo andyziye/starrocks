@@ -35,7 +35,7 @@ jobs:
       BASE_REF: ${{ steps.pr_details.outputs.BASE_REF }}
     steps:
       - run: |
-          sleep 30
+          sleep 10
 
       - name: Download workflow artifact - PR
         uses: dawidd6/action-download-artifact@v2
@@ -66,7 +66,7 @@ jobs:
         id: info
         run: |
           echo ${{ steps.pr_details.outputs.PR_NUMBER }}
-          echo ${{ steps.pr_details.outputs.base_ref }}
+          echo ${{ steps.pr_details.outputs.BASE_REF }}
 
   FE-REPORT:
     runs-on: [ self-hosted, quick ]
@@ -99,17 +99,17 @@ jobs:
             mkdir fe && cd fe
             ossutil64 --config-file ~/.ossutilconfig cp ${oss_path}/ . --recursive
             tar zxf fe_ut_report.tar.gz
-          else
+          elif [[ "${BASE_REF}" == "main" ]]; then
             rm -rf ./coverchecker && ln -s /var/local/env/coverchecker ./coverchecker && cd coverchecker && git pull
             export JAVA_HOME=/var/local/env/jdk1.8.0_202;
             export PATH=$JAVA_HOME/bin:$PATH;
             java -jar cover-checker-console/target/cover-checker-console-1.4.0-jar-with-dependencies.jar \
-              --cover /var/local/env/empty_cov_result --github-token ${{ secrets.PAT }} \
+              --cover /var/local/env/empty_cov_result --github-token ${{ secrets.GITHUB_TOKEN }} \
               --repo ${{ github.repository }} --threshold 80 --github-url api.github.com --pr ${PR_NUMBER} -type jacoco
           fi
 
       - name: Publish UT Report
-        uses: mikepenz/action-junit-report@v4
+        uses: mikepenz/action-junit-report@v3
         id: publish_report
         if: steps.download-ut-xml.outputs.size != '0'
         env:
@@ -124,7 +124,7 @@ jobs:
 
       - name: Merge FE Coverage
         id: merge_report
-        if: steps.publish_report.outcome == 'success'
+        if: steps.publish_report.outcome == 'success' && env.BASE_REF == 'main'
         env:
           fe_path: ${{ github.workspace }}/fe
         run: |
@@ -170,12 +170,12 @@ jobs:
           export PATH=$JAVA_HOME/bin:$PATH;
           if [[ -e "${fe_path}/diff.txt" ]]; then
             java -jar cover-checker-console/target/cover-checker-console-1.4.0-jar-with-dependencies.jar \
-              --cover ${{ github.workspace }}/result/ --github-token ${{ secrets.PAT }} \
+              --cover ${{ github.workspace }}/result/ --github-token ${{ secrets.GITHUB_TOKEN }} \
               --repo ${{ github.repository }} --threshold 80 --github-url api.github.com --pr ${PR_NUMBER} -type jacoco \
               -d ${fe_path}/diff.txt -dt file
           else
             java -jar cover-checker-console/target/cover-checker-console-1.4.0-jar-with-dependencies.jar \
-              --cover ${{ github.workspace }}/result/ --github-token ${{ secrets.PAT }} \
+              --cover ${{ github.workspace }}/result/ --github-token ${{ secrets.GITHUB_TOKEN }} \
               --repo ${{ github.repository }} --threshold 80 --github-url api.github.com --pr ${PR_NUMBER} -type jacoco
           fi
           rm -rf coverchecker
@@ -205,7 +205,7 @@ jobs:
   BE-REPORT:
     runs-on: [ self-hosted, quick ]
     needs: INFO
-    if: needs.INFO.outputs.PR_NUMBER != ''
+    if: needs.INFO.outputs.PR_NUMBER != '' && needs.INFO.outputs.BASE_REF == 'main'
     env:
       GH_TOKEN: ${{ github.token }}
       REPO: ${{ github.repository }}
@@ -222,7 +222,7 @@ jobs:
           bucket_prefix=`echo ${REPO%/*} | tr '[:upper:]' '[:lower:]'`
           echo "bucket_prefix=${bucket_prefix}" >> $GITHUB_OUTPUT
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -231,10 +231,17 @@ jobs:
         env:
           bucket_prefix: ${{ steps.info.outputs.bucket_prefix }}
         run: |
-          oss_path=oss://${bucket_prefix}-ci-release/$BASE_REF/ASAN/pr/UT-Report/${PR_NUMBER}
-          size=$(ossutil64 --config-file ~/.ossutilconfig ls ${oss_path}/be_ut_coverage.xml | grep "Object Number is" | awk '{print $NF}')
+          oss_path=oss://${bucket_prefix}-ci-release/$BASE_REF/DEBUG/pr/UT-Report/${PR_NUMBER}
+          be_ut_res_path=${oss_path}/flag/be_ut_res
+          size=$(ossutil64 --config-file ~/.ossutilconfig ls ${be_ut_res_path} | grep "Object Number is" | awk '{print $NF}')
           echo "size=${size}" >> $GITHUB_OUTPUT
           if [[ "$size" != "0" ]]; then
+            ossutil64 --config-file ~/.ossutilconfig cp ${be_ut_res_path} . >/dev/null
+            res=`cat be_ut_res`
+            if [[ "$res" != "0" ]]; then
+              echo "::error::BE UT failed!"
+              exit 1
+            fi
             cd be
             ossutil64 --config-file ~/.ossutilconfig cp ${oss_path}/be_ut_coverage.xml . -f 1>/dev/null
             ossutil64 --config-file ~/.ossutilconfig cp ${oss_path}/base_version.txt . -f 1>/dev/null
@@ -245,63 +252,59 @@ jobs:
             export JAVA_HOME=/var/local/env/jdk1.8.0_202;
             export PATH=$JAVA_HOME/bin:$PATH;
             java -jar cover-checker-console/target/cover-checker-console-1.4.0-jar-with-dependencies.jar \
-              --cover /var/local/env/be_empty_coverage.xml --github-token ${{ secrets.PAT }} --pr ${PR_NUMBER} \
+              --cover /var/local/env/be_empty_coverage.xml --github-token ${{ secrets.GITHUB_TOKEN }} --pr ${PR_NUMBER} \
               --repo ${{ github.repository }} --threshold 80 --github-url api.github.com -type cobertura --module BE
           fi
 
-      - name: Merge Total Coverage
+      - name: Merge BE Total Coverage
         id: merge
-        if: steps.download-ut-xml.outputs.size != '0'
+        if: github.repository == 'StarRocks/starrocks' && steps.download-ut-xml.outputs.size != '0' && steps.download-ut-xml.outcome == 'success'
         run: |
           rm -rf ./ci-tool && cp -rf /var/lib/ci-tool ./ci-tool && cd ci-tool && git pull && source lib/init.sh
-          ECI_ID=`./bin/create_eci.sh ${BASE_REF} ${REPO}`
-          TOTAL_COV_XML=/var/local/env/be_total_coverage_${PR_ID}.xml
           
+          export ECI_ID=`./bin/create_eci.sh ${BASE_REF} ${REPO}`
+          export TOTAL_COV_XML=/var/local/env/be_total_coverage_${PR_NUMBER}.xml
+          export COV_LOG=/var/local/env/be_total_coverage_${PR_NUMBER}.log
+          export RES_FILE=/var/local/env/be_total_coverage_res_${PR_NUMBER}.log
+               
+          echo ${ECI_ID}
           echo "ECI_ID=${ECI_ID}" >> $GITHUB_OUTPUT
           echo "COV_XML=${TOTAL_COV_XML}" >> $GITHUB_OUTPUT
+          echo "COV_LOG=${COV_LOG}" >> $GITHUB_OUTPUT
+          echo "RES_FILE=${RES_FILE}" >> $GITHUB_OUTPUT
           
-          eci cp ./bin/gen_be_cov.sh $ECI_ID:/root/gen_be_cov.sh
-          eci exec ${ECI_ID} bash -c "cd /root; ./gen_be_cov.sh ${REPO} ${BASE_REF} ${PR_NUMBER} ${HEAD_SHA}" | tee run.log
-          result=`tail -n 1 run.log`
-          echo "RESULT=${result}" >> $GITHUB_OUTPUT
+          ./bin/gen_be_cov.sh ${REPO} ${BASE_REF} ${PR_NUMBER} ${HEAD_SHA}
 
       # Incremental Total Coverage
       - name: Publish Incremental Coverage Report - Total
-        if: always() && steps.download-ut-xml.outputs.size != '0'
+        if: always() && steps.download-ut-xml.outputs.size != '0' && steps.download-ut-xml.outcome == 'success'
         env:
           be_path: ${{ github.workspace }}/be
           merge_outcome: ${{ steps.merge.outcome }}
-          merge_result: ${{ steps.merge.outputs.RESULT }}
           total_xml: ${{ steps.merge.outputs.COV_XML }}
         run: |
           rm -rf ./coverchecker && ln -s /var/local/env/coverchecker ./coverchecker && cd coverchecker && git pull
           export JAVA_HOME=/var/local/env/jdk1.8.0_202;
           export PATH=$JAVA_HOME/bin:$PATH;
-          if [[ ${merge_outcome} == 'failure' || ${merge_result} == 'FALSE' ]]; then
+          if [[ "${{ github.repository }}" != "StarRocks/starrocks" ]] || [[ "${merge_outcome}" == "failure" ]]; then
               total_xml=${be_path}/be_ut_coverage.xml
           fi
           java -jar cover-checker-console/target/cover-checker-console-1.4.0-jar-with-dependencies.jar \
-            --cover ${total_xml} --github-token ${{ secrets.PAT }} --repo ${{ github.repository }} \
+            --cover ${total_xml} --github-token ${{ secrets.GITHUB_TOKEN }} --repo ${{ github.repository }} \
             --threshold 80 --github-url api.github.com --pr ${PR_NUMBER} -type cobertura --module BE \
             -d ${be_path}/diff.txt -dt file
 
       - name: Clean ENV
         if: always()
-        env:
-          total_xml: ${{ steps.merge.outputs.COV_XML }}
         run: |
           rm -rf ${{ github.workspace }}/*
-          if [[ "${{ steps.merge.outputs.ECI_ID }}" != "" ]]; then
-            eci rm ${{ steps.merge.outputs.ECI_ID }}
-          fi
-          if [[ "${total_xml}" != "" ]]; then
-            rm -f ${total_xml}
-          fi
+          eci rm ${{ steps.merge.outputs.ECI_ID }} || true
+          rm -rf ${{ steps.merge.outputs.COV_LOG }} ${{ steps.merge.outputs.COV_XML }} ${{ steps.merge.outputs.RES_FILE }}
 
   SQL-Tester-REPORT:
     runs-on: [ self-hosted, quick ]
     needs: INFO
-    if: needs.INFO.outputs.PR_NUMBER != ''
+    if: needs.INFO.outputs.PR_NUMBER != '' && needs.INFO.outputs.BASE_REF == 'main'
     env:
       PR_NUMBER: ${{ needs.INFO.outputs.PR_NUMBER }}
       BASE_REF: ${{ needs.INFO.outputs.BASE_REF }}
@@ -328,11 +331,12 @@ jobs:
           echo "size=${size}" >> $GITHUB_OUTPUT
           if [[ "$size" != "0" ]]; then
             ossutil64 --config-file ~/.ossutilconfig cp ${oss_path} . --recursive
+          else
+            cp /var/local/env/sqltester_empty_coverage.xml .
           fi
 
       - name: Prepare Tools
         id: prepare-tools
-        if: steps.download-SQL-Tester-xml.outputs.size != '0'
         run: |
           mkdir -p .actions/nose-report-action
           cd .actions/nose-report-action
@@ -352,7 +356,7 @@ jobs:
   Admit-REPORT:
     runs-on: [ self-hosted, quick ]
     needs: INFO
-    if: needs.INFO.outputs.PR_NUMBER != ''
+    if: needs.INFO.outputs.PR_NUMBER != '' && needs.INFO.outputs.BASE_REF == 'main'
     env:
       PR_NUMBER: ${{ needs.INFO.outputs.PR_NUMBER }}
       BASE_REF: ${{ needs.INFO.outputs.BASE_REF }}

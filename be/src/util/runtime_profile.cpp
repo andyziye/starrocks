@@ -39,18 +39,12 @@
 #include <iostream>
 #include <memory>
 #include <queue>
-#include <unordered_set>
 #include <utility>
 
-#include "common/config.h"
 #include "common/object_pool.h"
 #include "gutil/map_util.h"
 #include "gutil/strings/substitute.h"
-#include "util/debug_util.h"
-#include "util/monotime.h"
 #include "util/pretty_printer.h"
-#include "util/thread.h"
-#include "util/time.h"
 
 namespace starrocks {
 
@@ -71,7 +65,6 @@ const std::string RuntimeProfile::ROOT_COUNTER = ""; // NOLINT
 RuntimeProfile::RuntimeProfile(std::string name, bool is_averaged_profile)
         : _parent(nullptr),
           _pool(new ObjectPool()),
-          _own_pool(false),
           _name(std::move(name)),
           _metadata(-1),
           _is_averaged_profile(is_averaged_profile),
@@ -419,13 +412,24 @@ void RuntimeProfile::copy_all_info_strings_from(RuntimeProfile* src_profile) {
             if (size_t pos; (pos = key.find("__DUP(")) != std::string::npos) {
                 original_key = key.substr(0, pos);
             }
-            size_t i = 0;
+            int32_t offset = -1;
+            int32_t previous_offset;
+            int32_t step = 1;
             while (true) {
-                const std::string indexed_key = strings::Substitute("$0__DUP($1)", original_key, i++);
+                previous_offset = offset;
+                offset += step;
+                const std::string indexed_key = strings::Substitute("$0__DUP($1)", original_key, offset);
                 if (get_info_string(indexed_key) == nullptr) {
-                    add_info_string(indexed_key, value);
-                    break;
+                    if (step == 1) {
+                        add_info_string(indexed_key, value);
+                        break;
+                    }
+                    // Forward too much, try to forward half of the former size
+                    offset = previous_offset;
+                    step >>= 1;
+                    continue;
                 }
+                step <<= 1;
             }
         }
     }
@@ -448,6 +452,7 @@ void RuntimeProfile::copy_all_info_strings_from(RuntimeProfile* src_profile) {
     }
 
 ADD_COUNTER_IMPL(AddHighWaterMarkCounter, HighWaterMarkCounter)
+ADD_COUNTER_IMPL(AddLowWaterMarkCounter, LowWaterMarkCounter)
 
 RuntimeProfile::Counter* RuntimeProfile::add_child_counter(const std::string& name, TUnit::type type,
                                                            const TCounterStrategy& strategy,
@@ -812,9 +817,6 @@ RuntimeProfile* RuntimeProfile::merge_isomorphic_profiles(ObjectPool* obj_pool, 
                                                           bool require_identical) {
     DCHECK(!profiles.empty());
 
-    static const std::string MERGED_INFO_PREFIX_MIN = "__MIN_OF_";
-    static const std::string MERGED_INFO_PREFIX_MAX = "__MAX_OF_";
-
     // all metrics will be merged into the first profile
     auto* merged_profile = obj_pool->add(new RuntimeProfile(profiles[0]->name(), profiles[0]->_is_averaged_profile));
 
@@ -926,20 +928,23 @@ RuntimeProfile* RuntimeProfile::merge_isomorphic_profiles(ObjectPool* obj_pool, 
                     break;
                 }
 
-                auto* min_counter = profile->get_counter(strings::Substitute("$0$1", MERGED_INFO_PREFIX_MIN, name));
-                if (min_counter != nullptr) {
-                    already_merged = true;
-                    if (min_counter->value() < min_value) {
-                        min_value = min_counter->value();
+                if (!counter->skip_min_max()) {
+                    auto* min_counter = profile->get_counter(strings::Substitute("$0$1", MERGED_INFO_PREFIX_MIN, name));
+                    if (min_counter != nullptr) {
+                        already_merged = true;
+                        if (min_counter->value() < min_value) {
+                            min_value = min_counter->value();
+                        }
+                    }
+                    auto* max_counter = profile->get_counter(strings::Substitute("$0$1", MERGED_INFO_PREFIX_MAX, name));
+                    if (max_counter != nullptr) {
+                        already_merged = true;
+                        if (max_counter->value() > max_value) {
+                            max_value = max_counter->value();
+                        }
                     }
                 }
-                auto* max_counter = profile->get_counter(strings::Substitute("$0$1", MERGED_INFO_PREFIX_MAX, name));
-                if (max_counter != nullptr) {
-                    already_merged = true;
-                    if (max_counter->value() > max_value) {
-                        max_value = max_counter->value();
-                    }
-                }
+
                 counters.push_back(counter);
             }
 
@@ -966,14 +971,16 @@ RuntimeProfile* RuntimeProfile::merge_isomorphic_profiles(ObjectPool* obj_pool, 
 
                 merged_counter->set(merged_value);
 
-                auto* min_counter =
-                        merged_profile->add_child_counter(strings::Substitute("$0$1", MERGED_INFO_PREFIX_MIN, name),
-                                                          type, merged_counter->strategy(), name);
-                auto* max_counter =
-                        merged_profile->add_child_counter(strings::Substitute("$0$1", MERGED_INFO_PREFIX_MAX, name),
-                                                          type, merged_counter->strategy(), name);
-                min_counter->set(min_value);
-                max_counter->set(max_value);
+                if (!merged_counter->skip_min_max()) {
+                    auto* min_counter =
+                            merged_profile->add_child_counter(strings::Substitute("$0$1", MERGED_INFO_PREFIX_MIN, name),
+                                                              type, merged_counter->strategy(), name);
+                    auto* max_counter =
+                            merged_profile->add_child_counter(strings::Substitute("$0$1", MERGED_INFO_PREFIX_MAX, name),
+                                                              type, merged_counter->strategy(), name);
+                    min_counter->set(min_value);
+                    max_counter->set(max_value);
+                }
             }
         }
     }

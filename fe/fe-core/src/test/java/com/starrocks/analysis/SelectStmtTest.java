@@ -105,6 +105,7 @@ public class SelectStmtTest {
                 .withTable(createDateTblStmtStr)
                 .withTable(createPratitionTableStr)
                 .withTable(createTable1);
+        FeConstants.enablePruneEmptyOutputScan = false;
     }
 
     @Test
@@ -139,6 +140,23 @@ public class SelectStmtTest {
     }
 
     @Test
+    void testNavicatBinarySupport() throws Exception {
+        String sql = "SELECT ACTION_ORDER, \n" +
+                "       EVENT_OBJECT_TABLE, \n" +
+                "       TRIGGER_NAME, \n" +
+                "       EVENT_MANIPULATION, \n" +
+                "       EVENT_OBJECT_TABLE, \n" +
+                "       DEFINER, \n" +
+                "       ACTION_STATEMENT, \n" +
+                "       ACTION_TIMING\n" +
+                "FROM information_schema.triggers\n" +
+                "WHERE BINARY event_object_schema = 'test_ods_inceptor' \n" +
+                "  AND BINARY event_object_table = 'cus_ast_total_d_p' \n" +
+                "ORDER BY event_object_table";
+        starRocksAssert.query(sql).explainQuery();
+    }
+
+    @Test
     void testEqualExprNotMonotonic() throws Exception {
         ConnectContext ctx = UtFrameUtils.createDefaultCtx();
         String sql = "select k1 from db1.baseall where (k1=10) = true";
@@ -146,10 +164,10 @@ public class SelectStmtTest {
                 "[TPlanNode(node_id:0, node_type:OLAP_SCAN_NODE, num_children:0, limit:-1, row_tuples:[0], " +
                         "nullable_tuples:[false], conjuncts:[TExpr(nodes:[TExprNode(node_type:BINARY_PRED, " +
                         "type:TTypeDesc(types:[TTypeNode(type:SCALAR, scalar_type:TScalarType(type:BOOLEAN))]), " +
-                        "opcode:EQ, num_children:2, output_scale:-1, vector_opcode:INVALID_OPCODE, child_type:BOOLEAN, " +
+                        "opcode:EQ, num_children:2, output_scale:-1, vector_opcode:INVALID_OPCODE, child_type:INT, " +
                         "has_nullable_child:true, is_nullable:true, is_monotonic:false)";
         String thrift = UtFrameUtils.getPlanThriftString(ctx, sql);
-        Assert.assertTrue(thrift.contains(expectString));
+        Assert.assertTrue(thrift, thrift.contains(expectString));
     }
 
     @Test
@@ -400,16 +418,14 @@ public class SelectStmtTest {
     void testMultiDistinctMultiColumnWithLimit(String sql, String pattern) throws Exception {
         starRocksAssert.getCtx().getSessionVariable().setOptimizerExecuteTimeout(30000000);
         String plan = UtFrameUtils.getFragmentPlan(starRocksAssert.getCtx(), sql);
-        System.out.println(plan);
         Assert.assertTrue(plan, plan.contains(pattern));
     }
 
     @Test
-    public void test() throws Exception {
+    public void testSingleMultiColumnDistinct() throws Exception {
         starRocksAssert.getCtx().getSessionVariable().setOptimizerExecuteTimeout(30000000);
         String plan = UtFrameUtils.getFragmentPlan(starRocksAssert.getCtx(),
                 "select count(distinct k1, k2), count(distinct k3) from db1.tbl1 limit 1");
-        System.out.println(plan);
         Assert.assertTrue(plan, plan.contains("18:NESTLOOP JOIN\n" +
                 "  |  join op: CROSS JOIN\n" +
                 "  |  colocate: false, reason: \n" +
@@ -473,16 +489,16 @@ public class SelectStmtTest {
                 {"with t1 as (select count(distinct k1, k2) as a, count(distinct k3) as b from db1.tbl1 " +
                         "group by k2, k3, k4) select * from t1 limit 1",
                         "14:Project\n" +
-                                "  |  <slot 11> : 11: count\n" +
-                                "  |  <slot 12> : 12: count\n" +
+                                "  |  <slot 5> : 5: count\n" +
+                                "  |  <slot 6> : 6: count\n" +
                                 "  |  limit: 1\n" +
                                 "  |  \n" +
                                 "  13:HASH JOIN\n" +
                                 "  |  join op: INNER JOIN (BUCKET_SHUFFLE(S))\n" +
                                 "  |  colocate: false, reason: \n" +
-                                "  |  equal join conjunct: 14: k2 <=> 17: k2\n" +
-                                "  |  equal join conjunct: 15: k3 <=> 18: k3\n" +
-                                "  |  equal join conjunct: 16: k4 <=> 19: k4\n" +
+                                "  |  equal join conjunct: 8: k2 <=> 11: k2\n" +
+                                "  |  equal join conjunct: 9: k3 <=> 12: k3\n" +
+                                "  |  equal join conjunct: 10: k4 <=> 13: k4\n" +
                                 "  |  limit: 1"
                 }
         };
@@ -577,5 +593,54 @@ public class SelectStmtTest {
         } catch (Exception e) {
             Assert.fail("Should not throw an exception");
         }
+    }
+
+    @Test
+    public void testMergeLimitAfterPruneGroupByKeys() throws Exception {
+        String sql = "SELECT\n" +
+                "    name\n" +
+                "FROM\n" +
+                "    (\n" +
+                "        select\n" +
+                "            case\n" +
+                "                when a.emp_name in('Alice', 'Bob') then 'RD'\n" +
+                "                when a.emp_name in('Bob', 'Charlie') then 'QA'\n" +
+                "                else 'BD'\n" +
+                "            end as role,\n" +
+                "            a.emp_name as name\n" +
+                "        from\n" +
+                "            (\n" +
+                "                select 'Alice' as emp_name\n" +
+                "                union   all\n" +
+                "                select 'Bob' as emp_name\n" +
+                "                union all\n" +
+                "                select 'Charlie' as emp_name\n" +
+                "            ) a\n" +
+                "    ) SUB_QRY\n" +
+                "WHERE name IS NOT NULL AND role IN ('QA')\n" +
+                "GROUP BY name\n" +
+                "ORDER BY name ASC";
+        String plan = UtFrameUtils.getVerboseFragmentPlan(starRocksAssert.getCtx(), sql);
+        Assert.assertTrue(plan, plan.contains("PLAN FRAGMENT 0(F00)\n" +
+                "  Output Exprs:7: expr\n" +
+                "  Input Partition: UNPARTITIONED\n" +
+                "  RESULT SINK\n" +
+                "\n" +
+                "  2:SORT\n" +
+                "  |  order by: [7, VARCHAR, false] ASC\n" +
+                "  |  offset: 0\n" +
+                "  |  cardinality: 1\n" +
+                "  |  \n" +
+                "  1:Project\n" +
+                "  |  output columns:\n" +
+                "  |  7 <-> 'Charlie'\n" +
+                "  |  limit: 1\n" +
+                "  |  cardinality: 1\n" +
+                "  |  \n" +
+                "  0:UNION\n" +
+                "     constant exprs: \n" +
+                "         NULL\n" +
+                "     limit: 1\n" +
+                "     cardinality: 1\n"));
     }
 }

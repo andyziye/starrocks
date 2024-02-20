@@ -241,12 +241,17 @@ build_llvm() {
         "LLVMBinaryFormat"
         "LLVMDebugInfoDWARF"
         "LLVMObjCARCOpts"
+        "LLVMPasses"
         "LLVMCodeGen"
+        "LLVMFrontendOpenMP"
         "LLVMMCDisassembler"
         "LLVMSupport"
         "LLVMJITLink"
         "LLVMCFGuard"
         "LLVMInstrumentation"
+        "LLVMInstCombine"
+        "LLVMipo"
+        "LLVMVectorize"
         "LLVMIRReader"
         "LLVMCore"
         "LLVMTarget"
@@ -254,10 +259,14 @@ build_llvm() {
         "LLVMAnalysis"
         "LLVMGlobalISel"
         "LLVMScalarOpts"
+        "LLVMLinker"
+        "LLVMCoroutines"
         "LLVMTargetParser"
         "LLVMDemangle"
         "LLVMRemarks"
         "LLVMDebugInfoCodeView"
+        "LLVMAggressiveInstCombine"
+        "LLVMIRPrinter"
         "LLVMOrcShared"
         "LLVMOrcJIT"
         "LLVMTextAPI"
@@ -267,6 +276,9 @@ build_llvm() {
         "LLVMTransformUtils"
         "LLVMSelectionDAG"
         "LLVMMCParser"
+        "LLVMX86AsmParser"
+        "LLVMX86Disassembler"
+        "LLVMSupport"
     )
     if [ "${LLVM_TARGET}" == "X86" ]; then
         LLVM_TARGETS_TO_BUILD+=("LLVMX86Info" "LLVMX86Desc" "LLVMX86CodeGen")
@@ -311,7 +323,6 @@ build_llvm() {
 
     restore_compile_flags
 }
-
 # protobuf
 build_protobuf() {
     check_if_source_exist $PROTOBUF_SOURCE
@@ -389,7 +400,7 @@ build_simdjson() {
     #ref: https://github.com/simdjson/simdjson/blob/master/HACKING.md
     mkdir -p $BUILD_DIR
     cd $BUILD_DIR
-    $CMAKE_CMD -G "${CMAKE_GENERATOR}" -DCMAKE_CXX_FLAGS="-O3" -DCMAKE_C_FLAGS="-O3" -DSIMDJSON_AVX512_ALLOWED=OFF ..
+    $CMAKE_CMD -G "${CMAKE_GENERATOR}" -DCMAKE_CXX_FLAGS="-O3" -DCMAKE_C_FLAGS="-O3" -DCMAKE_POSITION_INDEPENDENT_CODE=True -DSIMDJSON_AVX512_ALLOWED=OFF ..
     $CMAKE_CMD --build .
     mkdir -p $TP_INSTALL_DIR/lib
 
@@ -497,7 +508,7 @@ build_curl() {
 
     LDFLAGS="-L${TP_LIB_DIR}" LIBS="-lssl -lcrypto -ldl" \
     ./configure --prefix=$TP_INSTALL_DIR --disable-shared --enable-static \
-    --without-librtmp --with-ssl=${TP_INSTALL_DIR} --without-libidn2 --without-libgsasl --disable-ldap --enable-ipv6
+    --without-librtmp --with-ssl=${TP_INSTALL_DIR} --without-libidn2 --without-libgsasl --disable-ldap --enable-ipv6 --without-brotli
     make -j$PARALLEL
     make install
 }
@@ -566,11 +577,21 @@ build_rocksdb() {
     cp -r include/rocksdb $TP_INCLUDE_DIR
 }
 
+# kerberos
+build_kerberos() {
+    check_if_source_exist $KRB5_SOURCE
+    cd $TP_SOURCE_DIR/$KRB5_SOURCE/src
+    CFLAGS="-fcommon -fPIC" LDFLAGS="-L$TP_INSTALL_DIR/lib -pthread -ldl" \
+    ./configure --prefix=$TP_INSTALL_DIR --enable-static --disable-shared --with-spake-openssl=$TP_INSTALL_DIR
+    make -j$PARALLEL
+    make install
+}
+
 # sasl
 build_sasl() {
     check_if_source_exist $SASL_SOURCE
     cd $TP_SOURCE_DIR/$SASL_SOURCE
-    CFLAGS= ./autogen.sh --prefix=$TP_INSTALL_DIR --enable-gssapi=no --enable-static=yes --enable-shared=no --with-openssl=$TP_INSTALL_DIR
+    CFLAGS="-fPIC" LDFLAGS="-L$TP_INSTALL_DIR/lib -lresolv -pthread -ldl" ./autogen.sh --prefix=$TP_INSTALL_DIR --enable-gssapi=yes --enable-static --disable-shared --with-openssl=$TP_INSTALL_DIR --with-gss_impl=mit
     make -j$PARALLEL
     make install
 }
@@ -581,9 +602,11 @@ build_librdkafka() {
 
     cd $TP_SOURCE_DIR/$LIBRDKAFKA_SOURCE
 
-    $CMAKE_CMD -DCMAKE_LIBRARY_PATH=$TP_INSTALL_DIR/lib -DCMAKE_INCLUDE_PATH=$TP_INSTALL_DIR/include \
+    mkdir -p sr_build && cd sr_build
+    $CMAKE_CMD -DCMAKE_LIBRARY_PATH="$TP_INSTALL_DIR/lib;$TP_INSTALL_DIR/lib64" \
+        -DCMAKE_INCLUDE_PATH="$TP_INSTALL_DIR/include;$TP_INSTALL_DIR/include/zstd;$TP_INSTALL_DIR/include/lz4" \
         -DBUILD_SHARED_LIBS=0 -DCMAKE_INSTALL_PREFIX=$TP_INSTALL_DIR -DRDKAFKA_BUILD_STATIC=ON -DWITH_SASL=ON -DWITH_SASL_SCRAM=ON \
-        -DRDKAFKA_BUILD_EXAMPLES=OFF -DRDKAFKA_BUILD_TESTS=OFF -DWITH_SSL=ON -DCMAKE_INSTALL_LIBDIR=lib
+        -DRDKAFKA_BUILD_EXAMPLES=OFF -DRDKAFKA_BUILD_TESTS=OFF -DWITH_SSL=ON -DWITH_ZSTD=ON -DCMAKE_INSTALL_LIBDIR=lib ..
 
     ${BUILD_SYSTEM} -j$PARALLEL
     ${BUILD_SYSTEM} install
@@ -593,7 +616,7 @@ build_librdkafka() {
 build_pulsar() {
     check_if_source_exist $PULSAR_SOURCE
 
-    cd $TP_SOURCE_DIR/$PULSAR_SOURCE/pulsar-client-cpp
+    cd $TP_SOURCE_DIR/$PULSAR_SOURCE
 
     $CMAKE_CMD -DCMAKE_LIBRARY_PATH=$TP_INSTALL_DIR/lib -DCMAKE_INCLUDE_PATH=$TP_INSTALL_DIR/include \
         -DPROTOC_PATH=$TP_INSTALL_DIR/bin/protoc -DBUILD_TESTS=OFF -DBUILD_PYTHON_WRAPPER=OFF -DBUILD_DYNAMIC_LIB=OFF .
@@ -666,7 +689,7 @@ build_arrow() {
     -DCMAKE_INSTALL_PREFIX=$TP_INSTALL_DIR \
     -DCMAKE_INSTALL_LIBDIR=lib64 \
     -DARROW_BOOST_USE_SHARED=OFF -DARROW_GFLAGS_USE_SHARED=OFF -DBoost_NO_BOOST_CMAKE=ON -DBOOST_ROOT=$TP_INSTALL_DIR \
-    -DJEMALLOC_HOME=$TP_INSTALL_DIR \
+    -DJEMALLOC_HOME=$TP_INSTALL_DIR/jemalloc \
     -Dzstd_SOURCE=BUNDLED \
     -DRapidJSON_ROOT=$TP_INSTALL_DIR \
     -DARROW_SNAPPY_USE_SHARED=OFF \
@@ -965,18 +988,6 @@ build_gcs_connector() {
     cp -r $TP_SOURCE_DIR/$GCS_CONNECTOR_SOURCE/*.jar $TP_INSTALL_DIR/gcs_connector
 }
 
-build_broker_thirdparty_jars() {
-    check_if_source_exist $BROKER_THIRDPARTY_JARS_SOURCE
-    mkdir -p $TP_INSTALL_DIR/$BROKER_THIRDPARTY_JARS_SOURCE
-    cp -r $TP_SOURCE_DIR/$BROKER_THIRDPARTY_JARS_SOURCE/* $TP_INSTALL_DIR/$BROKER_THIRDPARTY_JARS_SOURCE
-    rm $TP_INSTALL_DIR/$BROKER_THIRDPARTY_JARS_SOURCE/hadoop-aliyun-2.7.2.jar
-    # cloudfs-hadoop-with-dependencies will include aws jars, but we already support aws by official sdk, so we don't need it anymore.
-    # And it will conflict with Iceberg's S3FileIO, make access S3 files failed.
-    rm $TP_INSTALL_DIR/$BROKER_THIRDPARTY_JARS_SOURCE/cloudfs-hadoop-with-dependencies-1.1.21.jar
-    # ensure read permission is granted for all users
-    chmod -R +r $TP_INSTALL_DIR/$BROKER_THIRDPARTY_JARS_SOURCE/
-}
-
 build_aws_cpp_sdk() {
     check_if_source_exist $AWS_SDK_CPP_SOURCE
     cd $TP_SOURCE_DIR/$AWS_SDK_CPP_SOURCE
@@ -1047,8 +1058,14 @@ build_jemalloc() {
         # change to 64K for arm architecture
         addition_opts=" --with-lg-page=16"
     fi
+    # build jemalloc with release
     CFLAGS="-O3 -fno-omit-frame-pointer -fPIC -g" \
-    ./configure --prefix=${TP_INSTALL_DIR} --with-jemalloc-prefix=je --enable-prof --disable-cxx --disable-libdl --disable-shared $addition_opts
+    ./configure --prefix=${TP_INSTALL_DIR}/jemalloc --with-jemalloc-prefix=je --enable-prof --disable-cxx --disable-libdl --disable-shared $addition_opts
+    make -j$PARALLEL
+    make install
+    # build jemalloc with debug options
+    CFLAGS="-O3 -fno-omit-frame-pointer -fPIC -g" \
+    ./configure --prefix=${TP_INSTALL_DIR}/jemalloc-debug --with-jemalloc-prefix=je --enable-prof --enable-debug --enable-fill --enable-prof --disable-cxx --disable-libdl --disable-shared $addition_opts
     make -j$PARALLEL
     make install
 }
@@ -1199,6 +1216,36 @@ build_libdeflate() {
     ${BUILD_SYSTEM} install
 }
 
+#clucene
+build_clucene() {
+
+    check_if_source_exist "${CLUCENE_SOURCE}"
+    cd "$TP_SOURCE_DIR/${CLUCENE_SOURCE}"
+
+    mkdir -p "${BUILD_DIR}"
+    cd "${BUILD_DIR}"
+    rm -rf CMakeCache.txt CMakeFiles/
+
+    ${CMAKE_CMD} -G "${CMAKE_GENERATOR}" \
+        -DCMAKE_INSTALL_PREFIX="$TP_INSTALL_DIR" \
+        -DCMAKE_INSTALL_LIBDIR=lib64 \
+        -DBUILD_STATIC_LIBRARIES=ON \
+        -DBUILD_SHARED_LIBRARIES=OFF \
+        -DBOOST_ROOT="$TP_INSTALL_DIR" \
+        -DZLIB_ROOT="$TP_INSTALL_DIR" \
+        -DCMAKE_CXX_FLAGS="-g -fno-omit-frame-pointer -Wno-narrowing" \
+        -DUSE_STAT64=0 \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DBUILD_CONTRIBS_LIB=ON ..
+    ${BUILD_SYSTEM} -j "${PARALLEL}"
+    ${BUILD_SYSTEM} install
+
+    cd "$TP_SOURCE_DIR/${CLUCENE_SOURCE}"
+    if [[ ! -d "$TP_INSTALL_DIR"/share ]]; then
+        mkdir -p "$TP_INSTALL_DIR"/share
+    fi
+}
+
 # restore cxxflags/cppflags/cflags to default one
 restore_compile_flags() {
     # c preprocessor flags
@@ -1248,13 +1295,16 @@ build_thrift
 build_leveldb
 build_brpc
 build_rocksdb
+build_kerberos
 build_sasl
-build_librdkafka
 build_flatbuffers
 build_jemalloc
 build_brotli
 # must build before arrow
 build_arrow
+# NOTE: librdkafka depends on ZSTD which is generated by Arrow, So this SHOULD be
+# built after arrow
+build_librdkafka
 build_pulsar
 build_s2
 build_bitshuffle
@@ -1269,7 +1319,6 @@ build_hyperscan
 build_mariadb
 build_aliyun_jindosdk
 build_gcs_connector
-build_broker_thirdparty_jars
 build_aws_cpp_sdk
 build_vpack
 build_opentelemetry
@@ -1285,6 +1334,8 @@ build_datasketches
 build_async_profiler
 build_fiu
 build_llvm
+build_clucene
+
 
 if [[ "${MACHINE_TYPE}" != "aarch64" ]]; then
     build_breakpad

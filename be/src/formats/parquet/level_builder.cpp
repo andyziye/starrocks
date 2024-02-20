@@ -109,7 +109,12 @@ void LevelBuilder::_write_column_chunk(const LevelBuilderContext& ctx, const Typ
     }
     case TYPE_CHAR:
     case TYPE_VARCHAR: {
-        _write_varchar_column_chunk(ctx, type_desc, node, col, write_leaf_callback);
+        _write_byte_array_column_chunk<TYPE_VARCHAR>(ctx, type_desc, node, col, write_leaf_callback);
+        break;
+    }
+    case TYPE_BINARY:
+    case TYPE_VARBINARY: {
+        _write_byte_array_column_chunk<TYPE_VARBINARY>(ctx, type_desc, node, col, write_leaf_callback);
         break;
     }
     case TYPE_ARRAY: {
@@ -122,6 +127,10 @@ void LevelBuilder::_write_column_chunk(const LevelBuilderContext& ctx, const Typ
     }
     case TYPE_STRUCT: {
         _write_struct_column_chunk(ctx, type_desc, node, col, write_leaf_callback);
+        break;
+    }
+    case TYPE_TIME: {
+        _write_time_column_chunk(ctx, type_desc, node, col, write_leaf_callback);
         break;
     }
     default: {
@@ -266,6 +275,32 @@ void LevelBuilder::_write_date_column_chunk(const LevelBuilderContext& ctx, cons
     });
 }
 
+void LevelBuilder::_write_time_column_chunk(const LevelBuilderContext& ctx, const TypeDescriptor& type_desc,
+                                            const ::parquet::schema::NodePtr& node, const ColumnPtr& col,
+                                            const CallbackFunction& write_leaf_callback) {
+    const auto* data_col = get_raw_data_column<TYPE_TIME>(col);
+    const auto* null_col = get_raw_null_column(col);
+
+    // Use the rep_levels in the context from caller since node is primitive.
+    auto& rep_levels = ctx._rep_levels;
+    auto def_levels = _make_def_levels(ctx, node, null_col, col->size());
+    auto null_bitset = _make_null_bitset(ctx, null_col, col->size());
+
+    auto values = new int64_t[col->size()];
+    DeferOp defer([&] { delete[] values; });
+    for (size_t i = 0; i < col->size(); i++) {
+        values[i] = data_col[i] * 1000000;
+    }
+
+    write_leaf_callback(LevelBuilderResult{
+            .num_levels = ctx._num_levels,
+            .def_levels = def_levels ? def_levels->data() : nullptr,
+            .rep_levels = rep_levels ? rep_levels->data() : nullptr,
+            .values = reinterpret_cast<uint8_t*>(values),
+            .null_bitset = null_bitset ? null_bitset->data() : nullptr,
+    });
+}
+
 void LevelBuilder::_write_datetime_column_chunk(const LevelBuilderContext& ctx, const TypeDescriptor& type_desc,
                                                 const ::parquet::schema::NodePtr& node, const ColumnPtr& col,
                                                 const CallbackFunction& write_leaf_callback) {
@@ -293,10 +328,11 @@ void LevelBuilder::_write_datetime_column_chunk(const LevelBuilderContext& ctx, 
     });
 }
 
-void LevelBuilder::_write_varchar_column_chunk(const LevelBuilderContext& ctx, const TypeDescriptor& type_desc,
-                                               const ::parquet::schema::NodePtr& node, const ColumnPtr& col,
-                                               const CallbackFunction& write_leaf_callback) {
-    const auto* data_col = down_cast<const RunTimeColumnType<TYPE_VARCHAR>*>(ColumnHelper::get_data_column(col.get()));
+template <LogicalType lt>
+void LevelBuilder::_write_byte_array_column_chunk(const LevelBuilderContext& ctx, const TypeDescriptor& type_desc,
+                                                  const ::parquet::schema::NodePtr& node, const ColumnPtr& col,
+                                                  const CallbackFunction& write_leaf_callback) {
+    const auto* data_col = down_cast<const RunTimeColumnType<lt>*>(ColumnHelper::get_data_column(col.get()));
     const auto* null_col = get_raw_null_column(col);
     auto& vo = data_col->get_offset();
     auto& vb = data_col->get_bytes();
@@ -501,7 +537,7 @@ void LevelBuilder::_write_struct_column_chunk(const LevelBuilderContext& ctx, co
     }
 }
 
-// Convert byte-addressable mask into a bit-addressable mask. Note the 0/1 values are flipped.
+// Bit-pack null column into an LSB-first bitmap. Note the 0/1 values are flipped.
 std::shared_ptr<std::vector<uint8_t>> LevelBuilder::_make_null_bitset(const LevelBuilderContext& ctx,
                                                                       const uint8_t* nulls,
                                                                       const size_t col_size) const {
@@ -512,7 +548,7 @@ std::shared_ptr<std::vector<uint8_t>> LevelBuilder::_make_null_bitset(const Leve
 
         auto bitset = std::make_shared<std::vector<uint8_t>>((col_size + 7) / 8);
         for (size_t i = 0; i < col_size; i++) {
-            (*bitset)[i / 8] |= (1 - nulls[i]) << (i % 8);
+            (*bitset)[i >> 3] |= (1 - nulls[i]) << (i & 0b111);
         }
         return bitset;
     }
@@ -527,7 +563,7 @@ std::shared_ptr<std::vector<uint8_t>> LevelBuilder::_make_null_bitset(const Leve
         }
         uint8_t is_null = nulls != nullptr ? nulls[col_offset] : 0;
         is_null |= (level < ctx._max_def_level); // undefined but having a slot in leaf column
-        (*bitset)[col_offset / 8] |= (1 - is_null) << (col_offset % 8);
+        (*bitset)[col_offset >> 3] |= (1 - is_null) << (col_offset & 0b111);
         col_offset++;
     }
     DCHECK(col_size == col_offset);

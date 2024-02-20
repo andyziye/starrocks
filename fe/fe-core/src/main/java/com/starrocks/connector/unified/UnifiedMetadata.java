@@ -21,7 +21,9 @@ import com.starrocks.catalog.Table;
 import com.starrocks.common.AlreadyExistsException;
 import com.starrocks.common.DdlException;
 import com.starrocks.common.MetaNotFoundException;
+import com.starrocks.common.profile.Tracers;
 import com.starrocks.connector.ConnectorMetadata;
+import com.starrocks.connector.MetaPreparationItem;
 import com.starrocks.connector.PartitionInfo;
 import com.starrocks.connector.RemoteFileInfo;
 import com.starrocks.connector.hive.HiveMetadata;
@@ -50,13 +52,19 @@ public class UnifiedMetadata implements ConnectorMetadata {
     public static final String ICEBERG_TABLE_TYPE_VALUE = "iceberg";
     public static final String SPARK_TABLE_PROVIDER_KEY = "spark.sql.sources.provider";
     public static final String DELTA_LAKE_PROVIDER = "delta";
+    public static final String PAIMON_STORAGE_HANDLER_KEY = "storage_handler";
+    public static final String PAIMON_STORAGE_HANDLER_VALUE = "org.apache.paimon.hive.PaimonStorageHandler";
 
-    static boolean isIcebergTable(Map<String, String> properties) {
+    public static boolean isIcebergTable(Map<String, String> properties) {
         return ICEBERG_TABLE_TYPE_VALUE.equalsIgnoreCase(properties.get(ICEBERG_TABLE_TYPE_NAME));
     }
 
-    static boolean isDeltaLakeTable(Map<String, String> properties) {
+    public static boolean isDeltaLakeTable(Map<String, String> properties) {
         return DELTA_LAKE_PROVIDER.equalsIgnoreCase(properties.get(SPARK_TABLE_PROVIDER_KEY));
+    }
+
+    public static boolean isPaimonTable(Map<String, String> properties) {
+        return PAIMON_STORAGE_HANDLER_VALUE.equalsIgnoreCase(properties.get(PAIMON_STORAGE_HANDLER_KEY));
     }
 
     private final Map<Table.TableType, ConnectorMetadata> metadataMap;
@@ -71,7 +79,7 @@ public class UnifiedMetadata implements ConnectorMetadata {
 
     private Table.TableType getTableType(String dbName, String tblName) {
         Table table = hiveMetadata.getTable(dbName, tblName);
-        if (table == null) {
+        if (table == null || table.isHiveView()) {
             return HIVE; // use hive metadata by default
         }
         if (table.isHudiTable()) {
@@ -98,6 +106,11 @@ public class UnifiedMetadata implements ConnectorMetadata {
     private ConnectorMetadata metadataOfTable(Table table) {
         Table.TableType type = getTableType(table);
         return metadataMap.get(type);
+    }
+
+    @Override
+    public Table.TableType getTableType() {
+        return HIVE;
     }
 
     @Override
@@ -130,6 +143,12 @@ public class UnifiedMetadata implements ConnectorMetadata {
     }
 
     @Override
+    public boolean tableExists(String dbName, String tblName) {
+        ConnectorMetadata metadata = metadataOfTable(dbName, tblName);
+        return metadata.tableExists(dbName, tblName);
+    }
+
+    @Override
     public List<RemoteFileInfo> getRemoteFileInfos(Table table, List<PartitionKey> partitionKeys, long snapshotId,
                                                    ScalarOperator predicate, List<String> fieldNames, long limit) {
         ConnectorMetadata metadata = metadataOfTable(table);
@@ -143,10 +162,22 @@ public class UnifiedMetadata implements ConnectorMetadata {
     }
 
     @Override
+    public List<PartitionKey> getPrunedPartitions(Table table, ScalarOperator predicate, long limit) {
+        ConnectorMetadata metadata = metadataOfTable(table);
+        return metadata.getPrunedPartitions(table, predicate, limit);
+    }
+
+    @Override
     public Statistics getTableStatistics(OptimizerContext session, Table table, Map<ColumnRefOperator, Column> columns,
                                          List<PartitionKey> partitionKeys, ScalarOperator predicate, long limit) {
         ConnectorMetadata metadata = metadataOfTable(table);
         return metadata.getTableStatistics(session, table, columns, partitionKeys, predicate, limit);
+    }
+
+    @Override
+    public boolean prepareMetadata(MetaPreparationItem item, Tracers tracers) {
+        ConnectorMetadata metadata = metadataOfTable(item.getTable());
+        return metadata.prepareMetadata(item, tracers);
     }
 
     @Override

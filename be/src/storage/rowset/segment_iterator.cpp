@@ -38,6 +38,7 @@
 #include "storage/column_predicate.h"
 #include "storage/column_predicate_rewriter.h"
 #include "storage/del_vector.h"
+#include "storage/inverted/index_descriptor.hpp"
 #include "storage/lake/update_manager.h"
 #include "storage/olap_runtime_range_pruner.hpp"
 #include "storage/projection_iterator.h"
@@ -56,6 +57,8 @@
 #include "storage/storage_engine.h"
 #include "storage/types.h"
 #include "storage/update_manager.h"
+#include "types/array_type_info.h"
+#include "types/logical_type.h"
 #include "util/starrocks_metrics.h"
 
 namespace starrocks {
@@ -99,10 +102,7 @@ class SegmentIterator final : public ChunkIterator {
 public:
     SegmentIterator(std::shared_ptr<Segment> segment, Schema _schema, SegmentReadOptions options);
 
-    ~SegmentIterator() override {
-        _get_del_vec_st.permit_unchecked_error();
-        _get_dcg_st.permit_unchecked_error();
-    }
+    ~SegmentIterator() override = default;
 
     void close() override;
 
@@ -192,8 +192,8 @@ private:
     template <bool check_global_dict>
     Status _init_column_iterators(const Schema& schema);
     Status _get_row_ranges_by_keys();
-    Status _get_row_ranges_by_key_ranges();
-    Status _get_row_ranges_by_short_key_ranges();
+    StatusOr<SparseRange<>> _get_row_ranges_by_key_ranges();
+    StatusOr<SparseRange<>> _get_row_ranges_by_short_key_ranges();
     Status _get_row_ranges_by_zone_map();
     Status _get_row_ranges_by_bloom_filter();
     Status _get_row_ranges_by_rowid_range();
@@ -246,9 +246,11 @@ private:
 
     Status _apply_del_vector();
 
-    Status _read(Chunk* chunk, vector<rowid_t>* rowid, size_t n);
+    Status _init_inverted_index_iterators();
 
-    bool _skip_fill_data_cache() const { return !_opts.fill_data_cache; }
+    Status _apply_inverted_index();
+
+    Status _read(Chunk* chunk, vector<rowid_t>* rowid, size_t n);
 
     void _init_column_access_paths();
 
@@ -264,9 +266,8 @@ private:
 
     void _update_stats(RandomAccessFile* rfile);
 
-    //  This function will search and build the segment from delta column group,
-    // and also return the columns's index in this segment if need.
-    StatusOr<std::shared_ptr<Segment>> _get_dcg_segment(uint32_t ucid, int32_t* col_index);
+    //  This function will search and build the segment from delta column group.
+    StatusOr<std::shared_ptr<Segment>> _get_dcg_segment(uint32_t ucid);
 
     bool need_early_materialize_subfield(const FieldPtr& field);
 
@@ -325,6 +326,9 @@ private:
 
     bool _inited = false;
     bool _has_bitmap_index = false;
+    bool _has_inverted_index = false;
+
+    std::vector<InvertedIndexIterator*> _inverted_index_iterators;
 
     std::unordered_map<ColumnId, ColumnAccessPath*> _column_access_paths;
     std::unordered_map<ColumnId, ColumnAccessPath*> _predicate_column_access_paths;
@@ -410,11 +414,15 @@ Status SegmentIterator::_init() {
     _init_column_access_paths();
     RETURN_IF_ERROR(_check_low_cardinality_optimization());
     RETURN_IF_ERROR(_init_column_iterators<true>(_schema));
+    RETURN_IF_ERROR(_init_inverted_index_iterators());
+
     // filter by index stage
     // Use indexes and predicates to filter some data page
-    RETURN_IF_ERROR(_get_row_ranges_by_keys());
     RETURN_IF_ERROR(_get_row_ranges_by_rowid_range());
+    RETURN_IF_ERROR(_get_row_ranges_by_keys());
     RETURN_IF_ERROR(_apply_del_vector());
+    // Support prefilter for now
+    RETURN_IF_ERROR(_apply_inverted_index());
     RETURN_IF_ERROR(_apply_bitmap_index());
     RETURN_IF_ERROR(_get_row_ranges_by_zone_map());
     RETURN_IF_ERROR(_get_row_ranges_by_bloom_filter());
@@ -423,6 +431,12 @@ Status SegmentIterator::_init() {
     RETURN_IF_ERROR(_rewrite_predicates());
     RETURN_IF_ERROR(_init_context());
     _init_column_predicates();
+
+    // reverse scan_range
+    if (!_opts.asc_hint) {
+        _scan_range.split_and_revese(config::desc_hint_split_range, config::vector_chunk_size);
+    }
+
     _range_iter = _scan_range.new_iterator();
 
     return Status::OK();
@@ -439,6 +453,7 @@ Status SegmentIterator::_try_to_update_ranges_by_runtime_filter() {
                 RETURN_IF_ERROR(_column_iterators[cid]->get_row_ranges_by_zone_map(predicates, del_pred, &r));
                 size_t prev_size = _scan_range.span_size();
                 SparseRange<> res;
+                res.set_sorted(_scan_range.is_sorted());
                 _range_iter = _range_iter.intersection(r, &res);
                 std::swap(res, _scan_range);
                 _range_iter.set_range(&_scan_range);
@@ -448,7 +463,7 @@ Status SegmentIterator::_try_to_update_ranges_by_runtime_filter() {
             _opts.stats->raw_rows_read);
 }
 
-StatusOr<std::shared_ptr<Segment>> SegmentIterator::_get_dcg_segment(uint32_t ucid, int32_t* col_index) {
+StatusOr<std::shared_ptr<Segment>> SegmentIterator::_get_dcg_segment(uint32_t ucid) {
     // iterate dcg from new ver to old ver
     for (const auto& dcg : _dcgs) {
         // cols file index -> column index in corresponding file
@@ -456,36 +471,8 @@ StatusOr<std::shared_ptr<Segment>> SegmentIterator::_get_dcg_segment(uint32_t uc
         if (idx.first >= 0) {
             auto column_file = dcg->column_files(parent_name(_segment->file_name()))[idx.first];
             if (_dcg_segments.count(column_file) == 0) {
-                ASSIGN_OR_RETURN(auto dcg_segment, _segment->new_dcg_segment(*dcg, idx.first));
+                ASSIGN_OR_RETURN(auto dcg_segment, _segment->new_dcg_segment(*dcg, idx.first, _opts.tablet_schema));
                 _dcg_segments[column_file] = dcg_segment;
-            }
-            if (col_index != nullptr) {
-                /*
-                    If the number of cols file columns is less than corresponding dcg meta column_ids vector
-                    size, it means that drop column has been done. We should assign col_index more carefully.
-                    The column offset is not the offset in dcg column_ids vector but it should be the column
-                    offset of the loaded cols file.
-                */
-                DCHECK(_dcg_segments[column_file]->num_columns() <= dcg->column_ids()[idx.first].size());
-                if (_dcg_segments[column_file]->num_columns() < dcg->column_ids()[idx.first].size()) {
-                    const auto& new_schema = TabletSchema::create_with_uid(_segment->tablet_schema_share_ptr(),
-                                                                           dcg->column_ids()[idx.first]);
-
-                    *col_index = INT32_MIN;
-                    for (int i = 0; i < new_schema->columns().size(); ++i) {
-                        const auto& col = new_schema->column(i);
-                        if (col.unique_id() == dcg->column_ids()[idx.first][idx.second]) {
-                            *col_index = i;
-                            break;
-                        }
-                    }
-                    if (*col_index == INT32_MIN) {
-                        return Status::InternalError("Can not find suitable column in cols file, filename: " +
-                                                     _dcg_segments[column_file]->file_name());
-                    }
-                } else {
-                    *col_index = idx.second;
-                }
             }
             return _dcg_segments[column_file];
         }
@@ -498,13 +485,12 @@ StatusOr<std::unique_ptr<ColumnIterator>> SegmentIterator::_new_dcg_column_itera
                                                                                     std::string* filename,
                                                                                     ColumnAccessPath* path) {
     // build column iter from delta column group
-    int32_t col_index = 0;
-    ASSIGN_OR_RETURN(auto dcg_segment, _get_dcg_segment(ucid, &col_index));
+    ASSIGN_OR_RETURN(auto dcg_segment, _get_dcg_segment(ucid));
     if (dcg_segment != nullptr) {
         if (filename != nullptr) {
             *filename = dcg_segment->file_name();
         }
-        return dcg_segment->new_column_iterator(col_index, path);
+        return dcg_segment->new_column_iterator(ucid, path);
     }
     return nullptr;
 }
@@ -531,9 +517,10 @@ Status SegmentIterator::_init_column_iterator_by_cid(const ColumnId cid, const C
     iter_opts.use_page_cache = _opts.use_page_cache;
     iter_opts.check_dict_encoding = check_dict_enc;
     iter_opts.reader_type = _opts.reader_type;
-    iter_opts.fill_data_cache = _opts.fill_data_cache;
+    iter_opts.lake_io_opts = _opts.lake_io_opts;
 
-    RandomAccessFileOptions opts{.skip_fill_local_cache = _skip_fill_data_cache()};
+    RandomAccessFileOptions opts{.skip_fill_local_cache = !_opts.lake_io_opts.fill_data_cache,
+                                 .buffer_size = _opts.lake_io_opts.buffer_size};
 
     ColumnAccessPath* access_path = nullptr;
     if (_column_access_paths.find(cid) != _column_access_paths.end()) {
@@ -548,8 +535,10 @@ Status SegmentIterator::_init_column_iterator_by_cid(const ColumnId cid, const C
     ASSIGN_OR_RETURN(auto col_iter, _new_dcg_column_iterator((uint32_t)ucid, &dcg_filename, access_path));
     if (col_iter == nullptr) {
         // not found in delta column group, create normal column iterator
-        ASSIGN_OR_RETURN(_column_iterators[cid], _segment->new_column_iterator(cid, access_path, _opts.tablet_schema));
-        ASSIGN_OR_RETURN(auto rfile, _opts.fs->new_random_access_file(opts, _segment->file_name()));
+        auto tablet_schema = _opts.tablet_schema ? _opts.tablet_schema : _segment->tablet_schema_share_ptr();
+        const auto& col = tablet_schema->column(cid);
+        ASSIGN_OR_RETURN(_column_iterators[cid], _segment->new_column_iterator_or_default(col, access_path));
+        ASSIGN_OR_RETURN(auto rfile, _opts.fs->new_random_access_file(opts, _segment->file_info()));
         iter_opts.read_file = rfile.get();
         _column_files[cid] = std::move(rfile);
     } else {
@@ -648,31 +637,57 @@ void SegmentIterator::_init_column_predicates() {
 }
 
 Status SegmentIterator::_get_row_ranges_by_keys() {
-    StarRocksMetrics::instance()->segment_row_total.increment(num_rows());
+    if (_opts.is_first_split_of_segment) {
+        StarRocksMetrics::instance()->segment_row_total.increment(num_rows());
+    }
     SCOPED_RAW_TIMER(&_opts.stats->rows_key_range_filter_ns);
 
-    if (!_opts.short_key_ranges.empty()) {
-        RETURN_IF_ERROR(_get_row_ranges_by_short_key_ranges());
+    const uint32_t prev_num_rows = _scan_range.span_size();
+    const bool is_logical_split = !_opts.short_key_ranges.empty();
+
+    SparseRange<> scan_range_by_keys;
+    if (is_logical_split) {
+        ASSIGN_OR_RETURN(scan_range_by_keys, _get_row_ranges_by_short_key_ranges());
         _opts.stats->rows_key_range_num += _opts.short_key_ranges.size();
     } else {
-        RETURN_IF_ERROR(_get_row_ranges_by_key_ranges());
+        ASSIGN_OR_RETURN(scan_range_by_keys, _get_row_ranges_by_key_ranges());
     }
 
-    _opts.stats->rows_key_range_filtered += num_rows() - _scan_range.span_size();
+    _scan_range &= scan_range_by_keys;
+
+    if (!is_logical_split) {
+        _opts.stats->rows_key_range_filtered += prev_num_rows - _scan_range.span_size();
+    } else {
+        // For the multiple splits from the same segment, rows_key_range_filtered=N-n1-...-nk, where N denotes the
+        // number of rows of the segment, and ni denotes the number of rows of i-th split after short key index.
+        //             N rows
+        // ┌─────────────────────────────┐
+        // │  key range 1   key range 2  │ 2 key ranges
+        // │  ┌────┬────┐   ┌────┬────┐  │
+        // │  │ n1 │ n2 │   │ n3 │ n4 │  │ 4 splits
+        // └──┴────┴────┴───┴────┴────┴──┘
+        _opts.stats->rows_key_range_filtered += -static_cast<int64_t>(_scan_range.span_size());
+        if (_opts.is_first_split_of_segment) {
+            _opts.stats->rows_key_range_filtered += prev_num_rows;
+        }
+    }
+    _opts.stats->rows_after_key_range += _scan_range.span_size();
     StarRocksMetrics::instance()->segment_rows_by_short_key.increment(_scan_range.span_size());
+
     return Status::OK();
 }
 
-Status SegmentIterator::_get_row_ranges_by_key_ranges() {
+StatusOr<SparseRange<>> SegmentIterator::_get_row_ranges_by_key_ranges() {
     DCHECK(_opts.short_key_ranges.empty());
-    DCHECK_EQ(0, _scan_range.span_size());
+
+    SparseRange<> res;
 
     if (_opts.ranges.empty()) {
-        _scan_range.add(Range<>(0, num_rows()));
-        return Status::OK();
+        res.add(Range<>(0, num_rows()));
+        return res;
     }
 
-    RETURN_IF_ERROR(_segment->load_index(_skip_fill_data_cache()));
+    RETURN_IF_ERROR(_segment->load_index(_opts.lake_io_opts));
     for (const SeekRange& range : _opts.ranges) {
         rowid_t lower_rowid = 0;
         rowid_t upper_rowid = num_rows();
@@ -686,24 +701,25 @@ Status SegmentIterator::_get_row_ranges_by_key_ranges() {
             RETURN_IF_ERROR(_lookup_ordinal(range.lower(), range.inclusive_lower(), upper_rowid, &lower_rowid));
         }
         if (lower_rowid <= upper_rowid) {
-            _scan_range.add(Range{lower_rowid, upper_rowid});
+            res.add(Range{lower_rowid, upper_rowid});
         }
     }
 
-    return Status::OK();
+    return res;
 }
 
-Status SegmentIterator::_get_row_ranges_by_short_key_ranges() {
+StatusOr<SparseRange<>> SegmentIterator::_get_row_ranges_by_short_key_ranges() {
     DCHECK(!_opts.short_key_ranges.empty());
-    DCHECK_EQ(0, _scan_range.span_size());
+
+    SparseRange<> res;
 
     if (_opts.short_key_ranges.size() == 1 && _opts.short_key_ranges[0]->lower->is_infinite() &&
         _opts.short_key_ranges[0]->upper->is_infinite()) {
-        _scan_range.add(Range<>(0, num_rows()));
-        return Status::OK();
+        res.add(Range<>(0, num_rows()));
+        return res;
     }
 
-    RETURN_IF_ERROR(_segment->load_index(_skip_fill_data_cache()));
+    RETURN_IF_ERROR(_segment->load_index(_opts.lake_io_opts));
     for (const auto& short_key_range : _opts.short_key_ranges) {
         rowid_t lower_rowid = 0;
         rowid_t upper_rowid = num_rows();
@@ -731,11 +747,11 @@ Status SegmentIterator::_get_row_ranges_by_short_key_ranges() {
         }
 
         if (lower_rowid <= upper_rowid) {
-            _scan_range.add(Range{lower_rowid, upper_rowid});
+            res.add(Range{lower_rowid, upper_rowid});
         }
     }
 
-    return Status::OK();
+    return res;
 }
 
 Status SegmentIterator::_get_row_ranges_by_zone_map() {
@@ -952,6 +968,7 @@ inline Status SegmentIterator::_read(Chunk* chunk, vector<rowid_t>* rowids, size
         _opts.stats->blocks_load += 1;
         SCOPED_RAW_TIMER(&_opts.stats->block_fetch_ns);
         RETURN_IF_ERROR(_context->read_columns(chunk, range));
+        chunk->check_or_die();
     }
 
     if (rowids != nullptr) {
@@ -1012,6 +1029,7 @@ Status SegmentIterator::_do_get_next(Chunk* result, vector<rowid_t>* rowid) {
     const uint32_t chunk_capacity = _reserve_chunk_size;
     const uint32_t return_chunk_threshold = std::max<uint32_t>(chunk_capacity - chunk_capacity / 4, 1);
     const bool has_predicate = !_opts.predicates.empty();
+    const bool scan_range_normalized = _scan_range.is_sorted();
     const int64_t prev_raw_rows_read = _opts.stats->raw_rows_read;
 
     _context->_read_chunk->reset();
@@ -1033,6 +1051,10 @@ Status SegmentIterator::_do_get_next(Chunk* result, vector<rowid_t>* rowid) {
         }
         chunk_start = next_start;
         DCHECK_EQ(chunk_start, chunk->num_rows());
+
+        if (chunk_start && !scan_range_normalized) {
+            break;
+        }
     }
 
     size_t raw_chunk_size = chunk->num_rows();
@@ -1283,6 +1305,9 @@ StatusOr<uint16_t> SegmentIterator::_filter_by_expr_predicates(Chunk* chunk, vec
 }
 
 inline bool SegmentIterator::_can_using_dict_code(const FieldPtr& field) const {
+    if (field->type()->type() == TYPE_ARRAY) {
+        return false;
+    }
     if (_opts.predicates.find(field->id()) != _opts.predicates.end()) {
         return _predicate_need_rewrite[field->id()];
     } else {
@@ -1334,7 +1359,16 @@ Status SegmentIterator::_build_context(ScanContext* ctx) {
 
         if (use_dict_code || use_global_dict_code) {
             // create FixedLengthColumn<int64_t> for saving dict codewords.
-            auto f2 = std::make_shared<Field>(cid, f->name(), kDictCodeType, -1, -1, f->is_nullable());
+            FieldPtr f2;
+            if (f->type()->type() == TYPE_ARRAY && f->sub_field(0).type()->type() == TYPE_VARCHAR) {
+                auto child = f->sub_field(0);
+                TypeInfoPtr typeInfo = get_array_type_info(get_type_info(kDictCodeType, -1, -1));
+                f2 = std::make_shared<Field>(cid, f->name(), typeInfo, STORAGE_AGGREGATE_NONE, 0, false,
+                                             f->is_nullable());
+                f2->add_sub_field(Field(child.id(), child.name(), kDictCodeType, -1, -1, child.is_nullable()));
+            } else {
+                f2 = std::make_shared<Field>(cid, f->name(), kDictCodeType, -1, -1, f->is_nullable());
+            }
             ColumnIterator* iter = nullptr;
             if (use_global_dict_code) {
                 iter = new GlobalDictCodeColumnIterator(cid, _column_iterators[cid].get(),
@@ -1529,7 +1563,7 @@ Status SegmentIterator::_decode_dict_codes(ScanContext* ctx) {
         const FieldPtr& f = decode_schema.field(i);
         const ColumnId cid = f->id();
         if (!ctx->_is_dict_column[i] || ctx->_skip_dict_decode_indexes[i]) {
-            ctx->_dict_chunk->get_column_by_index(i)->swap_column(*ctx->_read_chunk->get_column_by_index(i));
+            ctx->_dict_chunk->get_column_by_index(i).swap(ctx->_read_chunk->get_column_by_index(i));
         } else {
             ColumnPtr& dict_codes = ctx->_read_chunk->get_column_by_index(i);
             ColumnPtr& dict_values = ctx->_dict_chunk->get_column_by_index(i);
@@ -1655,23 +1689,20 @@ Status SegmentIterator::_init_bitmap_index_iterators() {
         if (_bitmap_index_iterators[cid] == nullptr) {
             ColumnUID ucid = cid_2_ucid[cid];
             // the column's index in this segment file
-            int32_t col_index = 0;
-            ASSIGN_OR_RETURN(std::shared_ptr<Segment> segment_ptr, _get_dcg_segment(ucid, &col_index));
+            ASSIGN_OR_RETURN(std::shared_ptr<Segment> segment_ptr, _get_dcg_segment(ucid));
             if (segment_ptr == nullptr) {
                 // find segment from delta column group failed, using main segment
                 segment_ptr = _segment;
-                col_index = cid;
             }
 
             IndexReadOptions opts;
             opts.use_page_cache = config::enable_bitmap_index_memory_page_cache || !config::disable_storage_page_cache;
             opts.kept_in_memory = config::enable_bitmap_index_memory_page_cache;
-            opts.skip_fill_data_cache = _skip_fill_data_cache();
+            opts.lake_io_opts = _opts.lake_io_opts;
             opts.read_file = _column_files[cid].get();
             opts.stats = _opts.stats;
 
-            RETURN_IF_ERROR(segment_ptr->new_bitmap_index_iterator(col_index, opts, &_bitmap_index_iterators[cid],
-                                                                   _opts.tablet_schema));
+            RETURN_IF_ERROR(segment_ptr->new_bitmap_index_iterator(ucid, opts, &_bitmap_index_iterators[cid]));
             _has_bitmap_index |= (_bitmap_index_iterators[cid] != nullptr);
         }
     }
@@ -1790,6 +1821,71 @@ Status SegmentIterator::_apply_del_vector() {
     return Status::OK();
 }
 
+Status SegmentIterator::_init_inverted_index_iterators() {
+    DCHECK_EQ(_predicate_columns, _opts.predicates.size());
+    _inverted_index_iterators.resize(ChunkHelper::max_column_id(_schema) + 1, nullptr);
+    std::unordered_map<ColumnId, ColumnUID> cid_2_ucid;
+
+    for (auto& field : _schema.fields()) {
+        cid_2_ucid[field->id()] = field->uid();
+    }
+    for (const auto& pair : _opts.predicates) {
+        ColumnId cid = pair.first;
+        ColumnUID ucid = cid_2_ucid[cid];
+
+        if (_inverted_index_iterators[cid] == nullptr) {
+            RETURN_IF_ERROR(_segment->new_inverted_index_iterator(ucid, &_inverted_index_iterators[cid], _opts));
+            _has_inverted_index |= (_inverted_index_iterators[cid] != nullptr);
+        }
+    }
+    return Status::OK();
+}
+
+Status SegmentIterator::_apply_inverted_index() {
+    DCHECK_EQ(_predicate_columns, _opts.predicates.size());
+    RETURN_IF(!_has_inverted_index, Status::OK());
+    SCOPED_RAW_TIMER(&_opts.stats->gin_index_filter_timer);
+
+    roaring::Roaring row_bitmap = range2roaring(_scan_range);
+    size_t input_rows = row_bitmap.cardinality();
+    std::vector<const ColumnPredicate*> erased_preds;
+
+    std::unordered_map<ColumnId, ColumnId> cid_2_fid;
+    for (int i = 0; i < _schema.num_fields(); i++) {
+        cid_2_fid.emplace(_schema.field(i)->id(), i);
+    }
+
+    for (auto& [cid, pred_list] : _opts.predicates) {
+        InvertedIndexIterator* inverted_iter = _inverted_index_iterators[cid];
+        if (inverted_iter == nullptr) {
+            continue;
+        }
+        const auto& it = cid_2_fid.find(cid);
+        RETURN_IF(it == cid_2_fid.end(),
+                  Status::InternalError(strings::Substitute("No fid can be mapped by cid $0", cid)));
+        std::string column_name(_schema.field(it->second)->name());
+        for (const ColumnPredicate* pred : pred_list) {
+            Status res = pred->seek_inverted_index(column_name, _inverted_index_iterators[cid], &row_bitmap);
+            if (res.ok()) {
+                erased_preds.emplace_back(pred);
+            }
+        }
+    }
+    DCHECK_LE(row_bitmap.cardinality(), _scan_range.span_size());
+    _scan_range = roaring2range(row_bitmap);
+
+    // ---------------------------------------------------------
+    // Erase predicates that hit inverted index.
+    // ---------------------------------------------------------
+    for (const ColumnPredicate* pred : erased_preds) {
+        PredicateList& pred_list = _opts.predicates[pred->column_id()];
+        pred_list.erase(std::find(pred_list.begin(), pred_list.end(), pred));
+    }
+
+    _opts.stats->rows_gin_filtered += input_rows - _scan_range.span_size();
+    return Status::OK();
+}
+
 Status SegmentIterator::_get_row_ranges_by_bloom_filter() {
     RETURN_IF(_scan_range.empty(), Status::OK());
     RETURN_IF(_opts.predicates.empty(), Status::OK());
@@ -1804,8 +1900,44 @@ Status SegmentIterator::_get_row_ranges_by_bloom_filter() {
 }
 
 Status SegmentIterator::_get_row_ranges_by_rowid_range() {
-    RETURN_IF(_opts.rowid_range_option == nullptr || _scan_range.empty(), Status::OK());
-    _scan_range = _scan_range.intersection(*_opts.rowid_range_option);
+    DCHECK_EQ(0, _scan_range.span_size());
+
+    _scan_range.add(Range<>(0, num_rows()));
+
+    if (_opts.rowid_range_option != nullptr) {
+        _scan_range &= (*_opts.rowid_range_option);
+
+        // The rowid range is already applied key ranges at the short key block level.
+        // For example, as for the following N-rows segment,
+        // - after applying the rowid ranges, it contains n1+n2=b2+b3+b4=N-b1-b5 rows and filters out N-n1-n2 rows.
+        // - after applying the short key range index, it contains n1.2+n2.1=n1+n2-b2.1-b4.2 rows and filters out
+        //   n1+n2-n1.2-n2.1 rows.
+        // Therefore, here rowid range index accounts rows_key_range_filtered=N-n1-...-nk, where N denotes the
+        // number of rows of the segment, and ni denotes the number of rows of i-th split after rowid range index.
+        //
+        //                              N rows
+        // ┌──────────────────────────────────────────────────────────────┐
+        // │                                                              │
+        // │                  b2                    b4                    │
+        // │   ┌──────────┬────┬─────┬──────────┬────┬─────┬──────────┐   │
+        // │   │    b1    │b2.1│ b2.2│    b3    │b4.1│ b4.2│    b5    │   │ short key blocks
+        // │   └──────────┴────▲─────┴──────────┴────▲─────┴──────────┘   │
+        // │                   │                     │                    │
+        // │              ┌────┴──────────┬──────────┴─────┐              │
+        // │              │     n1        │      n2        │              │ rowid ranges
+        // │              └────▲──────────┴──────────▲─────┘              │
+        // │               n1.1│                     │ n2.2               │
+        // │                   ├──────────┬──────────┤                    │
+        // │                   │   n1.2   │   n2.1   │                    │ key ranges
+        // │                   └──────────┴──────────┘                    │
+        // │                                                              │
+        // └──────────────────────────────────────────────────────────────┘
+        _opts.stats->rows_key_range_filtered += -static_cast<int64_t>(_scan_range.span_size());
+        if (_opts.is_first_split_of_segment) {
+            _opts.stats->rows_key_range_filtered += num_rows();
+        }
+    }
+
     return Status::OK();
 }
 

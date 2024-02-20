@@ -43,9 +43,10 @@ public class MvRewriteContext {
 
     private final List<ScalarOperator> onPredicates;
     private final Rule rule;
-    private List<ColumnRefOperator> enforcedColumns;
+    private List<ColumnRefOperator> enforcedNonExistedColumns;
 
     private List<JoinDeriveContext> joinDeriveContexts;
+
 
     public MvRewriteContext(
             MaterializationContext materializationContext,
@@ -53,7 +54,8 @@ public class MvRewriteContext {
             OptExpression queryExpression,
             ReplaceColumnRefRewriter queryColumnRefRewriter,
             PredicateSplit queryPredicateSplit,
-            List<ScalarOperator> onPredicates, Rule rule) {
+            List<ScalarOperator> onPredicates,
+            Rule rule) {
         this.materializationContext = materializationContext;
         this.queryTables = queryTables;
         this.queryExpression = queryExpression;
@@ -108,11 +110,11 @@ public class MvRewriteContext {
         return joinDeriveContexts;
     }
 
-    public List<ColumnRefOperator> getEnforcedColumns() {
-        return enforcedColumns;
+    public List<ColumnRefOperator> getEnforcedNonExistedColumns() {
+        return enforcedNonExistedColumns;
     }
 
-    public void setEnforcedColumns(List<ColumnRefOperator> enforcedColumns) {
-        this.enforcedColumns = enforcedColumns;
+    public void setEnforcedNonExistedColumns(List<ColumnRefOperator> enforcedNonExistedColumns) {
+        this.enforcedNonExistedColumns = enforcedNonExistedColumns;
     }
 }

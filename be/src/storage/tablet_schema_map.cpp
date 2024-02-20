@@ -43,6 +43,20 @@ bool TabletSchemaMap::check_schema_unique_id(const TabletSchemaPB& schema_pb, co
     return true;
 }
 
+bool TabletSchemaMap::check_schema_unique_id(const TabletSchemaCSPtr& in_schema, const TabletSchemaCSPtr& ori_schema) {
+    if (in_schema->keys_type() != ori_schema->keys_type() || in_schema->num_columns() != ori_schema->num_columns() ||
+        in_schema->id() != ori_schema->id() || in_schema->schema_version() != ori_schema->schema_version()) {
+        return false;
+    }
+
+    for (auto i = 0; i < in_schema->num_columns(); i++) {
+        if (in_schema->column(i).unique_id() != ori_schema->column(i).unique_id()) {
+            return false;
+        }
+    }
+    return true;
+}
+
 std::pair<TabletSchemaMap::TabletSchemaPtr, bool> TabletSchemaMap::emplace(const TabletSchemaPB& schema_pb) {
     SchemaId id = schema_pb.id();
     DCHECK_NE(TabletSchema::invalid_id(), id);
@@ -86,6 +100,40 @@ std::pair<TabletSchemaMap::TabletSchemaPtr, bool> TabletSchemaMap::emplace(const
     return std::make_pair(result, insert);
 }
 
+std::pair<TabletSchemaMap::TabletSchemaPtr, bool> TabletSchemaMap::emplace(const TabletSchemaPtr& tablet_schema) {
+    DCHECK(tablet_schema != nullptr);
+    SchemaId id = tablet_schema->id();
+    DCHECK_NE(id, TabletSchema::invalid_id());
+    MapShard* shard = get_shard(id);
+    bool insert = false;
+    TabletSchemaPtr result = nullptr;
+    TabletSchemaPtr ptr = nullptr;
+    {
+        std::unique_lock l(shard->mtx);
+        auto it = shard->map.find(id);
+        if (it == shard->map.end()) {
+            result = tablet_schema;
+            shard->map.emplace(id, result);
+            insert = true;
+        } else {
+            ptr = it->second.lock();
+            if (UNLIKELY(!ptr)) {
+                result = tablet_schema;
+                it->second = std::weak_ptr<const TabletSchema>(result);
+                insert = true;
+            } else {
+                if (check_schema_unique_id(tablet_schema, ptr)) {
+                    result = ptr;
+                } else {
+                    result = tablet_schema;
+                }
+                insert = false;
+            }
+        }
+    }
+    return std::make_pair(result, insert);
+}
+
 size_t TabletSchemaMap::erase(SchemaId id) {
     MapShard* shard = get_shard(id);
     std::lock_guard l(shard->mtx);
@@ -101,17 +149,25 @@ bool TabletSchemaMap::contains(SchemaId id) const {
 TabletSchemaMap::Stats TabletSchemaMap::stats() const {
     Stats stats;
     for (const auto& shard : _map_shards) {
-        std::lock_guard l(shard.mtx);
-        stats.num_items += shard.map.size();
-        for (const auto& [_, weak_ptr] : shard.map) {
-            if (auto schema_ptr = weak_ptr.lock(); schema_ptr) {
-                auto use_cnt = schema_ptr.use_count();
-                auto schema_size = schema_ptr->mem_usage();
-                // The temporary variable schema_ptr took one reference, should exclude it.
-                stats.memory_usage += use_cnt >= 2 ? schema_size : 0;
-                stats.saved_memory_usage += (use_cnt >= 2) ? (use_cnt - 2) * schema_size : 0;
+        std::vector<std::shared_ptr<const TabletSchema>> tmp_shared_ptrs;
+        {
+            std::lock_guard l(shard.mtx);
+            stats.num_items += shard.map.size();
+            for (const auto& [_, weak_ptr] : shard.map) {
+                if (auto schema_ptr = weak_ptr.lock(); schema_ptr) {
+                    auto use_cnt = schema_ptr.use_count();
+                    auto schema_size = schema_ptr->mem_usage();
+                    // The temporary variable schema_ptr took one reference, should exclude it.
+                    stats.memory_usage += use_cnt >= 2 ? schema_size : 0;
+                    stats.saved_memory_usage += (use_cnt >= 2) ? (use_cnt - 2) * schema_size : 0;
+                    // save the `schema_ptr` into the vector, prevent it to be the last reference and be destroyed under the lock
+                    // which will be a dead lock.
+                    tmp_shared_ptrs.push_back(std::move(schema_ptr));
+                }
             }
         }
+        // release all the shared_ptr instances under no lock
+        tmp_shared_ptrs.clear();
     }
     return stats;
 }

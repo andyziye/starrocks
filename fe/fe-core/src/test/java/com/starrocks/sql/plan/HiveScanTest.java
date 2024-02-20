@@ -15,18 +15,22 @@
 package com.starrocks.sql.plan;
 
 import com.starrocks.planner.ScanNode;
-import com.starrocks.server.GlobalStateMgr;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 import java.util.List;
 
 public class HiveScanTest extends ConnectorPlanTestBase {
+    @ClassRule
+    public static TemporaryFolder temp = new TemporaryFolder();
+
     @BeforeClass
     public static void beforeClass() throws Exception {
-        ConnectorPlanTestBase.beforeClass();
-        GlobalStateMgr.getCurrentState().changeCatalogDb(connectContext, "hive0.partitioned_db");
+        ConnectorPlanTestBase.doInit(temp.newFolder().toURI().toString());
+        connectContext.changeCatalogDb("hive0.partitioned_db");
     }
 
     @Test

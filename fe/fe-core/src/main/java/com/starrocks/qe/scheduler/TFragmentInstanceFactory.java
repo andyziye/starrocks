@@ -34,6 +34,7 @@ import com.starrocks.thrift.TNetworkAddress;
 import com.starrocks.thrift.TPlanFragmentDestination;
 import com.starrocks.thrift.TPlanFragmentExecParams;
 import com.starrocks.thrift.TQueryOptions;
+import com.starrocks.thrift.TQueryQueueOptions;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -93,7 +94,7 @@ public class TFragmentInstanceFactory {
                                          TDescriptorTable descTable,
                                          int totalTableSinkDop) {
         // TODO(lzh): move to a more proper place.
-        execFragment.setBucketSeqToInstanceForRuntimeFilters();
+        execFragment.setLayoutInfosForRuntimeFilters();
 
         PlanFragment fragment = execFragment.getPlanFragment();
 
@@ -134,7 +135,7 @@ public class TFragmentInstanceFactory {
 
             if (isEnablePipeline) {
                 result.setIs_pipeline(true);
-                result.getQuery_options().setBatch_size(SessionVariable.PIPELINE_BATCH_SIZE);
+                result.getQuery_options().setBatch_size(sessionVariable.getChunkSize());
                 result.setEnable_shared_scan(sessionVariable.isEnableSharedScan());
                 result.params.setEnable_exchange_pass_through(sessionVariable.isEnableExchangePassThrough());
                 result.params.setEnable_exchange_perf(sessionVariable.isEnableExchangePerf());
@@ -149,6 +150,14 @@ public class TFragmentInstanceFactory {
                             sessionVariable.getAdaptiveDopMaxBlockRowsPerDriverSeq());
                     result.adaptive_dop_param.setMax_output_amplification_factor(
                             sessionVariable.getAdaptiveDopMaxOutputAmplificationFactor());
+                }
+                if (jobSpec.isEnableQueue()) {
+                    TQueryQueueOptions queryQueueOptions = new TQueryQueueOptions();
+                    queryQueueOptions.setEnable_global_query_queue(jobSpec.isEnableQueue());
+                    queryQueueOptions.setEnable_group_level_query_queue(jobSpec.isEnableGroupLevelQueue());
+
+                    TQueryOptions queryOptions = result.getQuery_options();
+                    queryOptions.setQuery_queue_options(queryQueueOptions);
                 }
             }
         }

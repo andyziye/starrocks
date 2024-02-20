@@ -1,17 +1,3 @@
-[sql]
-select
-            100.00 * sum(case
-                             when p_type like 'PROMO%'
-                                 then l_extendedprice * (1 - l_discount)
-                             else 0
-            end) / sum(l_extendedprice * (1 - l_discount)) as promo_revenue
-from
-    lineitem,
-    part
-where
-        l_partkey = p_partkey
-  and l_shipdate >= date '1997-02-01'
-  and l_shipdate < date '1997-03-01';
 [fragment statistics]
 PLAN FRAGMENT 0(F05)
 Output Exprs:30: expr
@@ -54,7 +40,7 @@ OutPut Exchange Id: 08
 |  output columns:
 |  21 <-> [21: p_type, VARCHAR, true]
 |  27 <-> [35: multiply, DECIMAL128(33,4), true]
-|  35 <-> [35: multiply, DECIMAL128(33,4), true]
+|  35 <-> clone([35: multiply, DECIMAL128(33,4), true])
 |  common expressions:
 |  32 <-> [7: l_discount, DECIMAL64(15,2), true]
 |  33 <-> 1 - [32: cast, DECIMAL64(18,2), true]

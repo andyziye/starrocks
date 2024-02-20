@@ -28,6 +28,8 @@ import static com.starrocks.credential.CloudConfigurationConstants.AWS_GLUE_IAM_
 import static com.starrocks.credential.CloudConfigurationConstants.AWS_GLUE_REGION;
 import static com.starrocks.credential.CloudConfigurationConstants.AWS_GLUE_SECRET_KEY;
 import static com.starrocks.credential.CloudConfigurationConstants.AWS_GLUE_SESSION_TOKEN;
+import static com.starrocks.credential.CloudConfigurationConstants.AWS_GLUE_STS_ENDPOINT;
+import static com.starrocks.credential.CloudConfigurationConstants.AWS_GLUE_STS_REGION;
 import static com.starrocks.credential.CloudConfigurationConstants.AWS_GLUE_USE_AWS_SDK_DEFAULT_BEHAVIOR;
 import static com.starrocks.credential.CloudConfigurationConstants.AWS_GLUE_USE_INSTANCE_PROFILE;
 import static com.starrocks.credential.CloudConfigurationConstants.AWS_S3_ACCESS_KEY;
@@ -39,9 +41,18 @@ import static com.starrocks.credential.CloudConfigurationConstants.AWS_S3_IAM_RO
 import static com.starrocks.credential.CloudConfigurationConstants.AWS_S3_REGION;
 import static com.starrocks.credential.CloudConfigurationConstants.AWS_S3_SECRET_KEY;
 import static com.starrocks.credential.CloudConfigurationConstants.AWS_S3_SESSION_TOKEN;
+import static com.starrocks.credential.CloudConfigurationConstants.AWS_S3_STS_ENDPOINT;
+import static com.starrocks.credential.CloudConfigurationConstants.AWS_S3_STS_REGION;
 import static com.starrocks.credential.CloudConfigurationConstants.AWS_S3_USE_AWS_SDK_DEFAULT_BEHAVIOR;
 import static com.starrocks.credential.CloudConfigurationConstants.AWS_S3_USE_INSTANCE_PROFILE;
 public class AWSCloudConfigurationProvider implements CloudConfigurationProvider {
+
+    /**
+     * In S3 SDK this region is implicitly the default one.
+     * So setting it by default to `us-east-1` simulates S3 better
+     * Refer this issue: <a href="https://issues.apache.org/jira/browse/HADOOP-17771">S3AFS creation fails "Unable to find a region via the region provider chain."</a>
+     */
+    public static final String DEFAULT_AWS_REGION = "us-east-1";
 
     public AWSCloudCredential buildGlueCloudCredential(HiveConf hiveConf) {
         Preconditions.checkNotNull(hiveConf);
@@ -52,8 +63,10 @@ public class AWSCloudConfigurationProvider implements CloudConfigurationProvider
                 hiveConf.get(AWS_GLUE_SECRET_KEY, ""),
                 hiveConf.get(AWS_GLUE_SESSION_TOKEN, ""),
                 hiveConf.get(AWS_GLUE_IAM_ROLE_ARN, ""),
+                hiveConf.get(AWS_GLUE_STS_REGION, ""),
+                hiveConf.get(AWS_GLUE_STS_ENDPOINT, ""),
                 hiveConf.get(AWS_GLUE_EXTERNAL_ID, ""),
-                hiveConf.get(AWS_GLUE_REGION, ""),
+                hiveConf.get(AWS_GLUE_REGION, DEFAULT_AWS_REGION),
                 hiveConf.get(AWS_GLUE_ENDPOINT, "")
         );
         if (!awsCloudCredential.validate()) {
@@ -72,8 +85,10 @@ public class AWSCloudConfigurationProvider implements CloudConfigurationProvider
                 properties.getOrDefault(AWS_S3_SECRET_KEY, ""),
                 properties.getOrDefault(AWS_S3_SESSION_TOKEN, ""),
                 properties.getOrDefault(AWS_S3_IAM_ROLE_ARN, ""),
+                properties.getOrDefault(AWS_S3_STS_REGION, ""),
+                properties.getOrDefault(AWS_S3_STS_ENDPOINT, ""),
                 properties.getOrDefault(AWS_S3_EXTERNAL_ID, ""),
-                properties.getOrDefault(AWS_S3_REGION, ""),
+                properties.getOrDefault(AWS_S3_REGION, DEFAULT_AWS_REGION),
                 properties.getOrDefault(AWS_S3_ENDPOINT, "")
         );
         if (!awsCloudCredential.validate()) {

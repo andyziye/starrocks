@@ -53,10 +53,11 @@ protected:
         auto _page_cache_mem_tracker = std::make_unique<MemTracker>();
         static const int kNumShardBits = 5;
         static const int kNumShards = 1 << kNumShardBits;
+        StoragePageCache::release_global_cache();
         StoragePageCache::create_global_cache(_page_cache_mem_tracker.get(), kNumShards * 100000);
     }
 
-    void TearDown() override { StoragePageCache::release_global_cache(); }
+    void TearDown() override { StoragePageCache::instance()->prune(); }
 };
 
 class TestMetricsVisitor : public MetricsVisitor {
@@ -299,6 +300,19 @@ TEST_F(StarRocksMetricsTest, PageCacheMetrics) {
     ASSERT_STREQ("1025", lookup_metric->to_string().c_str());
     ASSERT_STREQ("1", hit_metric->to_string().c_str());
     ASSERT_STREQ(std::to_string(cache->get_capacity()).c_str(), capacity_metric->to_string().c_str());
+}
+
+TEST_F(StarRocksMetricsTest, test_metrics_register) {
+    auto instance = StarRocksMetrics::instance()->metrics();
+    ASSERT_NE(nullptr, instance->get_metric("memtable_flush_total"));
+    ASSERT_NE(nullptr, instance->get_metric("memtable_flush_duration_us"));
+    ASSERT_NE(nullptr, instance->get_metric("memtable_flush_io_time_us"));
+    ASSERT_NE(nullptr, instance->get_metric("memtable_flush_memory_bytes_total"));
+    ASSERT_NE(nullptr, instance->get_metric("memtable_flush_disk_bytes_total"));
+    ASSERT_NE(nullptr, instance->get_metric("segment_flush_total"));
+    ASSERT_NE(nullptr, instance->get_metric("segment_flush_duration_us"));
+    ASSERT_NE(nullptr, instance->get_metric("segment_flush_io_time_us"));
+    ASSERT_NE(nullptr, instance->get_metric("segment_flush_bytes_total"));
 }
 
 } // namespace starrocks

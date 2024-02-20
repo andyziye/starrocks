@@ -82,7 +82,7 @@ option(WITH_COMPRESS "Build binary with compresss debug section" ON)
 
 option(WITH_CACHELIB "Build binary with cachelib library" OFF)
 
-option(WITH_STARCACHE "Build binary with starcache library" OFF)
+option(WITH_STARCACHE "Build binary with starcache library" ON)
 
 option(WITH_BENCH "Build binary with bench" OFF)
 
@@ -167,8 +167,22 @@ include_directories(${Boost_INCLUDE_DIRS})
 message(STATUS ${Boost_LIBRARIES})
 
 set(GPERFTOOLS_HOME "${THIRDPARTY_DIR}/gperftools")
+set(JEMALLOC_HOME "${THIRDPARTY_DIR}/jemalloc")
+
+if (${JEMALLOC_DEBUG})
+    set(JEMALLOC_HOME "${THIRDPARTY_DIR}/jemalloc-debug")
+endif()
 
 # Set all libraries
+
+add_library(clucene-core STATIC IMPORTED)
+set_target_properties(clucene-core PROPERTIES IMPORTED_LOCATION ${THIRDPARTY_DIR}/lib/libclucene-core-static.a)
+
+add_library(clucene-shared STATIC IMPORTED)
+set_target_properties(clucene-shared PROPERTIES IMPORTED_LOCATION ${THIRDPARTY_DIR}/lib/libclucene-shared-static.a)
+
+add_library(clucene-contribs-lib STATIC IMPORTED)
+set_target_properties(clucene-contribs-lib PROPERTIES IMPORTED_LOCATION ${THIRDPARTY_DIR}/lib/libclucene-contribs-lib.a)
 
 add_library(gflags STATIC IMPORTED GLOBAL)
 set_target_properties(gflags PROPERTIES IMPORTED_LOCATION ${THIRDPARTY_DIR}/lib/libgflags.a)
@@ -251,7 +265,7 @@ add_library(leveldb STATIC IMPORTED GLOBAL)
 set_target_properties(leveldb PROPERTIES IMPORTED_LOCATION ${THIRDPARTY_DIR}/lib/libleveldb.a)
 
 add_library(jemalloc STATIC IMPORTED)
-set_target_properties(jemalloc PROPERTIES IMPORTED_LOCATION ${THIRDPARTY_DIR}/lib/libjemalloc_pic.a)
+set_target_properties(jemalloc PROPERTIES IMPORTED_LOCATION ${JEMALLOC_HOME}/lib/libjemalloc_pic.a)
 
 add_library(brotlicommon STATIC IMPORTED)
 set_target_properties(brotlicommon PROPERTIES IMPORTED_LOCATION ${THIRDPARTY_DIR}/lib64/libbrotlicommon.a)
@@ -279,6 +293,21 @@ set_target_properties(brpc PROPERTIES IMPORTED_LOCATION ${THIRDPARTY_DIR}/lib64/
 
 add_library(rocksdb STATIC IMPORTED GLOBAL)
 set_target_properties(rocksdb PROPERTIES IMPORTED_LOCATION ${THIRDPARTY_DIR}/lib/librocksdb.a)
+
+add_library(krb5support STATIC IMPORTED)
+set_target_properties(krb5support PROPERTIES IMPORTED_LOCATION ${THIRDPARTY_DIR}/lib/libkrb5support.a)
+
+add_library(krb5 STATIC IMPORTED)
+set_target_properties(krb5 PROPERTIES IMPORTED_LOCATION ${THIRDPARTY_DIR}/lib/libkrb5.a)
+
+add_library(com_err STATIC IMPORTED)
+set_target_properties(com_err PROPERTIES IMPORTED_LOCATION ${THIRDPARTY_DIR}/lib/libcom_err.a)
+
+add_library(k5crypto STATIC IMPORTED)
+set_target_properties(k5crypto PROPERTIES IMPORTED_LOCATION ${THIRDPARTY_DIR}/lib/libk5crypto.a)
+
+add_library(gssapi_krb5 STATIC IMPORTED)
+set_target_properties(gssapi_krb5 PROPERTIES IMPORTED_LOCATION ${THIRDPARTY_DIR}/lib/libgssapi_krb5.a)
 
 add_library(sasl STATIC IMPORTED GLOBAL)
 set_target_properties(sasl PROPERTIES IMPORTED_LOCATION ${THIRDPARTY_DIR}/lib/libsasl2.a)
@@ -404,8 +433,14 @@ endif()
 
 if (${WITH_STARCACHE} STREQUAL "ON")
     add_library(starcache STATIC IMPORTED GLOBAL)
-    set_target_properties(starcache PROPERTIES IMPORTED_LOCATION ${THIRDPARTY_DIR}/starcache/lib/libstarcache.a)
-    include_directories(SYSTEM ${THIRDPARTY_DIR}/starcache/include)
+    if ("${USE_STAROS}" STREQUAL "ON")
+        set(STARCACHE_DIR "${STARLET_INSTALL_DIR}/starlet_install")
+    else()
+        set(STARCACHE_DIR "${THIRDPARTY_DIR}/starcache")
+    endif()
+    set_target_properties(starcache PROPERTIES IMPORTED_LOCATION ${STARCACHE_DIR}/lib/libstarcache.a)
+    include_directories(SYSTEM ${STARCACHE_DIR}/include)
+    message(STATUS "link the starcache in directory: ${STARCACHE_DIR}")
 endif()
 
 if ("${USE_STAROS}" STREQUAL "ON")
@@ -506,12 +541,16 @@ set (LLVM_LIBRARIES
     LLVMBinaryFormat
     LLVMDebugInfoDWARF
     LLVMObjCARCOpts
+    LLVMPasses
     LLVMCodeGen
+    LLVMFrontendOpenMP
     LLVMMCDisassembler
-    LLVMSupport
     LLVMJITLink
     LLVMCFGuard
     LLVMInstrumentation
+    LLVMInstCombine
+    LLVMipo
+    LLVMVectorize
     LLVMIRReader
     LLVMCore
     LLVMTarget
@@ -519,10 +558,14 @@ set (LLVM_LIBRARIES
     LLVMAnalysis
     LLVMGlobalISel
     LLVMScalarOpts
+    LLVMLinker
+    LLVMCoroutines
     LLVMTargetParser
     LLVMDemangle
     LLVMRemarks
     LLVMDebugInfoCodeView
+    LLVMAggressiveInstCombine
+    LLVMIRPrinter
     LLVMOrcShared
     LLVMOrcJIT
     LLVMTextAPI
@@ -532,11 +575,15 @@ set (LLVM_LIBRARIES
     LLVMTransformUtils
     LLVMSelectionDAG
     LLVMMCParser
+    LLVMX86AsmParser
+    LLVMX86Disassembler
+    LLVMSupport
 )
+
 if ("${CMAKE_BUILD_TARGET_ARCH}" STREQUAL "x86" OR "${CMAKE_BUILD_TARGET_ARCH}" STREQUAL "x86_64")
-    set(${LLVM_LIBRARIES} ${LLVM_LIBRARIES} LLVMX86CodeGen LLVMX86Desc LLVMX86Info)
+    list(APPEND LLVM_LIBRARIES LLVMX86CodeGen LLVMX86Desc LLVMX86Info)
 elseif ("${CMAKE_BUILD_TARGET_ARCH}" STREQUAL "aarch64")
-    set(${LLVM_LIBRARIES} ${LLVM_LIBRARIES} LLVMAArch64CodeGen LLVMAArch64Desc LLVMAArch64Info)
+    list(APPEND LLVM_LIBRARIES LLVMAArch64CodeGen LLVMAArch64Desc LLVMAArch64Info LLVMAArch64Utils)
 endif()
 
 foreach(lib IN ITEMS ${LLVM_LIBRARIES})
@@ -581,7 +628,16 @@ set(CXX_COMMON_FLAGS "${CXX_COMMON_FLAGS} -Wno-deprecated -Wno-vla -Wno-comment"
 set(CXX_COMMON_FLAGS "${CXX_COMMON_FLAGS} -fno-sized-deallocation")
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    if (NOT ${MAKE_TEST} STREQUAL "ON")
+        # there are too many warnings reported by clang in be/test and it will take some time to fix.
+        # temporarily disable Werror in the unit test so that clang can compile.
+        set(CXX_COMMON_FLAGS "${CXX_COMMON_FLAGS} -Werror")
+    endif()
     set(CXX_COMMON_FLAGS "${CXX_COMMON_FLAGS} -Wno-unused-parameter -Wno-documentation -Wno-weak-vtables")
+    # Turn on following warning as error explicitly
+    set(CXX_COMMON_FLAGS "${CXX_COMMON_FLAGS} -Werror=string-plus-int")
+    set(CXX_COMMON_FLAGS "${CXX_COMMON_FLAGS} -Werror=pessimizing-move")
+    set(CXX_COMMON_FLAGS "${CXX_COMMON_FLAGS} -Werror=delete-non-virtual-dtor")
     if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL "11.0.0")
         set(CXX_COMMON_FLAGS "${CXX_COMMON_FLAGS} -Wno-reserved-identifier -Wno-suggest-destructor-override")
     endif()
@@ -667,12 +723,6 @@ if (ENABLE_FAULT_INJECTION)
     message(STATUS "enable fault injection")
 endif()
 
-option(ASSERT_STATUS_CHECKED "build with assert status checked" OFF)
-if (ASSERT_STATUS_CHECKED)
-    message(STATUS "Build with assert status checked")
-    set(CXX_COMMON_FLAGS "${CXX_COMMON_FLAGS} -DSTARROCKS_ASSERT_STATUS_CHECKED")
-endif()
-
 # For CMAKE_BUILD_TYPE=Debug
 #   -ggdb: Enable gdb debugging
 # Debug information is stored as dwarf2 to be as compatible as possible
@@ -737,6 +787,7 @@ include_directories(
     ${GENSRC_DIR}/
     SYSTEM ${THIRDPARTY_DIR}/include
     SYSTEM ${GPERFTOOLS_HOME}/include
+    SYSTEM ${JEMALLOC_HOME}/include
     SYSTEM ${THIRDPARTY_DIR}/include/thrift/
     SYSTEM ${THIRDPARTY_DIR}/include/event/
     SYSTEM ${THIRDPARTY_DIR}/llvm/include/
@@ -807,6 +858,9 @@ set_target_properties(aws-cpp-sdk-core PROPERTIES INTERFACE_LINK_LIBRARIES AWS::
 set(STARROCKS_DEPENDENCIES
     ${STARROCKS_DEPENDENCIES}
     ${WL_START_GROUP}
+    clucene-core
+    clucene-shared
+    clucene-contribs-lib
     build_version
     rocksdb
     libs2
@@ -847,6 +901,11 @@ set(STARROCKS_DEPENDENCIES
     hyperscan
     simdjson
     sasl
+    gssapi_krb5
+    krb5
+    krb5support
+    k5crypto
+    com_err
     librdkafka_cpp
     librdkafka
     libpulsar
@@ -898,6 +957,7 @@ set(STARROCKS_LINK_LIBS ${STARROCKS_LINK_LIBS}
     ${STARROCKS_DEPENDENCIES}
     -static-libstdc++
     -static-libgcc
+    -lresolv
 )
 
 # Add sanitize static link flags or jemalloc

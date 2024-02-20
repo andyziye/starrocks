@@ -25,6 +25,7 @@ import com.starrocks.catalog.Table;
 import com.starrocks.common.AlreadyExistsException;
 import com.starrocks.common.DdlException;
 import com.starrocks.common.MetaNotFoundException;
+import com.starrocks.connector.MetaPreparationItem;
 import com.starrocks.connector.PartitionInfo;
 import com.starrocks.connector.RemoteFileInfo;
 import com.starrocks.connector.delta.DeltaLakeMetadata;
@@ -38,6 +39,7 @@ import mockit.Expectations;
 import mockit.Mocked;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.wildfly.common.Assert;
 
 import java.util.List;
 
@@ -237,6 +239,16 @@ public class UnifiedMetadataTest {
                 result = true;
                 times = 1;
             }
+            {
+                icebergMetadata.getPrunedPartitions(icebergTable, null, -1);
+                result = ImmutableList.of();
+                times = 1;
+            }
+            {
+                icebergMetadata.prepareMetadata((MetaPreparationItem) any, null);
+                result = true;
+                times = 1;
+            }
         };
 
         Table table = unifiedMetadata.getTable("test_db", "test_tbl");
@@ -254,6 +266,8 @@ public class UnifiedMetadataTest {
         unifiedMetadata.finishSink("test_db", "test_tbl", ImmutableList.of());
         createTableStmt.setEngineName("iceberg");
         assertTrue(unifiedMetadata.createTable(createTableStmt));
+        Assert.assertTrue(unifiedMetadata.getPrunedPartitions(table, null, -1).isEmpty());
+        Assert.assertTrue(unifiedMetadata.prepareMetadata(new MetaPreparationItem(icebergTable, null, -1), null));
     }
 
     @Test
@@ -393,5 +407,18 @@ public class UnifiedMetadataTest {
         unifiedMetadata.finishSink("test_db", "test_tbl", ImmutableList.of());
         createTableStmt.setEngineName("deltalake");
         assertTrue(unifiedMetadata.createTable(createTableStmt));
+    }
+
+    @Test
+    public void testTableExists(@Mocked HiveTable hiveTable) {
+        new Expectations() {
+            {
+                hiveMetadata.tableExists("test_db", "test_tbl");
+                result = true;
+                minTimes = 1;
+            }
+        };
+        boolean exists = unifiedMetadata.tableExists("test_db", "test_tbl");
+        Assert.assertTrue(exists);
     }
 }

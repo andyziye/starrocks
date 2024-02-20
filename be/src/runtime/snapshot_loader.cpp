@@ -109,7 +109,7 @@ Status SnapshotLoader::upload(const std::map<std::string, std::string>& src_to_d
         if (!status.ok()) {
             std::stringstream ss;
             ss << "failed to get broker client. "
-               << "broker addr: " << upload.broker_addr << ". msg: " << status.get_error_msg();
+               << "broker addr: " << upload.broker_addr << ". msg: " << status.message();
             LOG(WARNING) << ss.str();
             return Status::InternalError(ss.str());
         }
@@ -253,7 +253,7 @@ Status SnapshotLoader::download(const std::map<std::string, std::string>& src_to
         if (!status.ok()) {
             std::stringstream ss;
             ss << "failed to get broker client. "
-               << "broker addr: " << download.broker_addr << ". msg: " << status.get_error_msg();
+               << "broker addr: " << download.broker_addr << ". msg: " << status.message();
             LOG(WARNING) << ss.str();
             return Status::InternalError(ss.str());
         }
@@ -411,8 +411,7 @@ Status SnapshotLoader::download(const std::map<std::string, std::string>& src_to
             std::string new_name;
             Status st = _replace_tablet_id(local_file, remote_tablet_id, &new_name);
             if (!st.ok()) {
-                LOG(WARNING) << "failed to replace tablet id. unknown local file: " << st.get_error_msg()
-                             << ". ignore it";
+                LOG(WARNING) << "failed to replace tablet id. unknown local file: " << st.message() << ". ignore it";
                 continue;
             }
             VLOG(2) << "new file name after replace tablet id: " << new_name;
@@ -499,6 +498,7 @@ Status SnapshotLoader::primary_key_move(const std::string& snapshot_path, const 
     }
     snapshot_meta.tablet_meta().set_tablet_id(tablet_id);
 
+    // Do not need to copy GIN in pk table because it does not support GIN now
     RETURN_IF_ERROR(SnapshotManager::instance()->assign_new_rowset_id(&snapshot_meta, snapshot_path));
 
     if (overwrite) {
@@ -701,6 +701,7 @@ Status SnapshotLoader::move(const std::string& snapshot_path, const TabletShared
                             DeltaColumnGroupListSerializer::deserialize_delta_column_group_list(dcg_list_pb, &dcgs));
 
                     if (dcgs.size() == 0) {
+                        ++idx;
                         continue;
                     }
 
@@ -729,6 +730,8 @@ Status SnapshotLoader::move(const std::string& snapshot_path, const TabletShared
     // reload header
     {
         std::unique_lock l(tablet->get_meta_store_lock());
+        // prevet the concurrent issue with tablet meta checkpoint
+        tablet->set_will_be_force_replaced();
         status = StorageEngine::instance()->tablet_manager()->load_tablet_from_dir(store, tablet_id, schema_hash,
                                                                                    tablet_path, true);
     }
@@ -907,7 +910,7 @@ Status SnapshotLoader::_get_existing_files_from_local(const std::string& local_p
     Status status = FileSystem::Default()->get_children(local_path, local_files);
     if (!status.ok()) {
         std::stringstream ss;
-        ss << "failed to list files in local path: " << local_path << ", msg: " << status.get_error_msg();
+        ss << "failed to list files in local path: " << local_path << ", msg: " << status.message();
         LOG(WARNING) << ss.str();
         return status;
     }

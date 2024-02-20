@@ -27,7 +27,6 @@ namespace starrocks {
 
 class Tablet;
 class HashIndex;
-class PersistentIndexMetaLockGuard;
 
 const uint64_t ROWID_MASK = 0xffffffff;
 
@@ -112,8 +111,6 @@ public:
 
     Status on_commited();
 
-    void get_persistent_index_meta_lock_guard(PersistentIndexMetaLockGuard* guard);
-
     double get_write_amp_score();
 
     Status major_compaction(Tablet* tablet);
@@ -137,6 +134,12 @@ public:
     bool enable_persistent_index() { return _persistent_index != nullptr; }
 
     size_t key_size() { return _key_size; }
+
+    Status reset(Tablet* tablet, EditVersion version, PersistentIndexMetaPB* index_meta);
+
+    void reset_cancel_major_compaction();
+
+    Status pk_dump(PrimaryKeyDump* dump, PrimaryIndexMultiLevelPB* dump_pb);
 
 protected:
     void _set_schema(const Schema& pk_schema);
