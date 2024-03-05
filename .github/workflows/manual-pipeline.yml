@@ -1,0 +1,50 @@
+name: MANUAL PIPELINE
+
+on:
+  workflow_dispatch:
+
+permissions:
+  checks: write
+  actions: write
+  contents: write
+  deployments: write
+  discussions: write
+  issues: write
+  packages: write
+  pages: write
+  pull-requests: write
+  repository-projects: write
+  security-events: write
+  statuses: write
+
+jobs:
+
+  be-ut:
+    runs-on: [self-hosted, normal]
+    timeout-minutes: 180
+    name: BE UT
+    continue-on-error: true
+    env:
+      BRANCH: 'main'
+    strategy:
+      fail-fast: false
+      matrix:
+        build_type: [ Release, ASAN ]
+    steps:
+      - name: Matrix
+        shell: bash
+        env:
+          build_type: ${{ matrix.build_type }}
+        run: |
+          echo ${build_type}
+
+  Teardown:
+    runs-on: [self-hosted, normal]
+    name: Teardown
+    needs: [ be-ut ]
+    if: always()
+    steps:
+      - name: info
+        id: backup
+        run: |
+          echo "${{ job.status }}"
