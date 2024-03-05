@@ -50,14 +50,13 @@ jobs:
         if: always()
         run: |
           set -x
-          mkdir -p outputs
-          echo "${{steps.matrix_step.outcome}}" > ./outputs/${{ matrix.build_type }}.txt
+          echo "${{steps.matrix_step.outcome}}" > ${{ matrix.build_type }}.txt
 
       - uses: actions/upload-artifact@v4
         if: always() && steps.output.outcome == 'success'
         with:
-          name: BE-UT-outputs-${{ matrix.build_type }}
-          path: outputs/*.txt
+          name: BE-UT-RESULT-${{ matrix.build_type }}
+          path: ${{ matrix.build_type }}.txt
 
   Teardown:
     runs-on: ubuntu-latest
