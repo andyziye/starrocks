@@ -20,7 +20,7 @@ permissions:
 jobs:
 
   be-ut:
-    runs-on: [self-hosted, normal]
+    runs-on: ubuntu-latest
     timeout-minutes: 180
     name: BE UT
     continue-on-error: true
@@ -53,7 +53,7 @@ jobs:
           echo "${{ matrix.build_type }}=${{steps.matrix_step.outcome}}" >> $GITHUB_OUTPUT
 
   Teardown:
-    runs-on: [self-hosted, normal]
+    runs-on: ubuntu-latest
     name: Teardown
     needs: [ be-ut ]
     steps:
