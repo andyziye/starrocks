@@ -56,7 +56,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always() && steps.output.outcome == 'success'
         with:
-          name: outputs
+          name: BE-UT-outputs-${{ matrix.build_type }}
           path: outputs/*.txt
 
   Teardown:
@@ -67,7 +67,6 @@ jobs:
       - name: Load outputs
         uses: actions/download-artifact@v4
         with:
-          name: outputs
           path: outputs
 
       - run: |
