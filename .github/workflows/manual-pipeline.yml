@@ -54,7 +54,7 @@ jobs:
           echo "${{steps.matrix_step.outcome}}" > ./outputs/${{ matrix.build_type }}.txt
 
       - uses: actions/upload-artifact@v4
-        if: steps.output.outcome == 'success'
+        if: always() && steps.output.outcome == 'success'
         with:
           name: outputs
           path: outputs/*.txt
