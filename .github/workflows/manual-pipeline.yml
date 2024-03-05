@@ -71,4 +71,4 @@ jobs:
 
       - run: |
           ls outputs
-          cat outputs/*.txt
+          cat outputs/*
