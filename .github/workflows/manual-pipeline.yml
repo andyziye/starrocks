@@ -48,9 +48,8 @@ jobs:
       - name: save result
         id: output
         if: always()
-        run:
+        run: |
           set -x
-          mkdir -p outputs
           echo "${{steps.matrix_step.outcome}}" > ./outputs/${{ matrix.build_type }}.txt
 
       - uses: actions/upload-artifact@v4
