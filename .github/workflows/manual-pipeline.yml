@@ -71,4 +71,5 @@ jobs:
 
       - run: |
           ls outputs
-          cat outputs/*
+          cat outputs/BE-UT-outputs-ASAN/*.txt
+          cat outputs/BE-UT-outputs-Release/*.txt
