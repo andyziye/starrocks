@@ -70,6 +70,6 @@ jobs:
 
       - run: |
           ls outputs
-          ls outputs/BE-UT-outputs-ASAN
-          cat outputs/BE-UT-outputs-ASAN
-          cat outputs/BE-UT-outputs-Release
+          ls outputs/BE-UT-RESULT-ASAN
+          cat outputs/BE-UT-RESULT-ASAN/*.txt
+          cat outputs/BE-UT-RESULT-Release/*.txt
