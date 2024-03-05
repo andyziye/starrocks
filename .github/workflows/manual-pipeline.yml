@@ -50,13 +50,24 @@ jobs:
         if: always()
         run:
           set -x
-          echo "${{ matrix.build_type }}=${{steps.matrix_step.outcome}}" >> $GITHUB_OUTPUT
+          echo "${{steps.matrix_step.outcome}}" > outputs/${{ matrix.build_type }}.txt
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: outputs
+          path: outputs/*.txt
 
   Teardown:
     runs-on: ubuntu-latest
     name: Teardown
     needs: [ be-ut ]
     steps:
-      - name: ASAN Result
-        run: |
-          echo '${{ toJSON(needs.be-ut.outputs) }}'
+      - name: Load outputs
+        uses: actions/download-artifact@v4
+        with:
+          name: outputs
+          path: outputs
+
+      - run: |
+          ls outputs
+          cat outputs/*.txt
