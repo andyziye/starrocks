@@ -47,8 +47,12 @@ jobs:
     needs: [ be-ut ]
     if: always()
     steps:
-      - name: info
-        id: backup
+      - name: ASAN Result
+        if: matrix.build_type == 'ASAN'
         run: |
           echo "${{ job.status }}"
-          echo "${{ needs.be-ut.result }}"
+
+      - name: ASAN Result
+        if: matrix.build_type == 'Release'
+        run: |
+          echo "${{ job.status }}"
