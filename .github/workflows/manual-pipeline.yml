@@ -45,7 +45,6 @@ jobs:
     runs-on: [self-hosted, normal]
     name: Teardown
     needs: [ be-ut ]
-    if: always()
     steps:
       - name: ASAN Result
         if: matrix.build_type == 'ASAN'
