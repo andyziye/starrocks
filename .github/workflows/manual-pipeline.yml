@@ -37,6 +37,9 @@ jobs:
           build_type: ${{ matrix.build_type }}
         run: |
           echo ${build_type}
+          if [[ "${build_type}" == "ASAN" ]]; then
+            exit 1
+          fi
 
   Teardown:
     runs-on: [self-hosted, normal]
