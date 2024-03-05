@@ -51,3 +51,4 @@ jobs:
         id: backup
         run: |
           echo "${{ job.status }}"
+          echo "${{ needs.be-ut.result }}"
