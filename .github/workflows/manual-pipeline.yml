@@ -30,8 +30,12 @@ jobs:
       fail-fast: false
       matrix:
         build_type: [ Release, ASAN ]
+    outputs:
+      ASAN: ${{ steps.output.outputs.ASAN }}
+      Release: ${{ steps.output.outputs.Release }}
     steps:
       - name: Matrix
+        id: matrix_step
         shell: bash
         env:
           build_type: ${{ matrix.build_type }}
@@ -41,17 +45,18 @@ jobs:
             exit 1
           fi
 
+      - name: save result
+        id: output
+        if: always()
+        run:
+          set -x
+          echo "${{ matrix.build_type }}=${{steps.matrix_step.outcome}}" >> $GITHUB_OUTPUT
+
   Teardown:
     runs-on: [self-hosted, normal]
     name: Teardown
     needs: [ be-ut ]
     steps:
       - name: ASAN Result
-        if: matrix.build_type == 'ASAN'
         run: |
-          echo "${{ job.status }}"
-
-      - name: ASAN Result
-        if: matrix.build_type == 'Release'
-        run: |
-          echo "${{ job.status }}"
+          echo '${{ toJSON(needs.be-ut.outputs) }}'
