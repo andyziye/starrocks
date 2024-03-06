@@ -28,7 +28,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 180
     name: BE UT
-    continue-on-error: true
     env:
       BRANCH: 'main'
     strategy:
