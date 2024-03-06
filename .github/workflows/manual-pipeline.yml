@@ -27,6 +27,7 @@ jobs:
   a:
     runs-on: ubuntu-latest
     timeout-minutes: 180
+    continue-on-error: true
     name: A
     env:
       BRANCH: 'main'
@@ -83,6 +84,7 @@ jobs:
   c:
     runs-on: ubuntu-latest
     timeout-minutes: 180
+    continue-on-error: true
     name: C
     needs:
       - a
