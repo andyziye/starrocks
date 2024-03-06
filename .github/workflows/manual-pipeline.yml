@@ -82,3 +82,10 @@ jobs:
           ls outputs/BE-UT-RESULT-ASAN
           cat outputs/BE-UT-RESULT-ASAN/*.txt
           cat outputs/BE-UT-RESULT-Release/*.txt
+
+  HAHA:
+    if: ! inputs.IS_REBUILD
+    runs-on: ubuntu-latest
+    steps:
+      - name: test
+        run: echo haha
