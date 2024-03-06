@@ -35,6 +35,8 @@ jobs:
       fail-fast: false
       matrix:
         build_type: [ Release, ASAN ]
+    outputs:
+      my_output: ${{ steps.matrix_step.outputs.some_output }}
     steps:
       - name: Matrix
         id: matrix_step
@@ -43,11 +45,9 @@ jobs:
           build_type: ${{ matrix.build_type }}
         run: |
           echo ${build_type}
+          echo "::set-output name=some_output::${{ matrix.build_type }}"
           if [[ "${build_type}" == "ASAN" ]]; then
-            echo "A=a" >> $GITHUB_OUTPUT
             exit 1
-          else
-            echo "B=c" >> $GITHUB_OUTPUT
           fi
 
 #      - name: save result
