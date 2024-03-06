@@ -23,13 +23,6 @@ permissions:
   statuses: write
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo ${{ inputs.IS_REBUILD }}
-
-      - if: inputs.IS_REBUILD
-        run: echo yes
 
   be-ut:
     runs-on: ubuntu-latest
