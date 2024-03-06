@@ -49,18 +49,19 @@ jobs:
             exit 1
           fi
 
-#      - name: save result
-#        id: output
-#        if: always()
-#        run: |
-#          set -x
-#          echo "${{steps.matrix_step.outcome}}" > ${{ matrix.build_type }}.txt
-#
-#      - uses: actions/upload-artifact@v4
-#        if: always() && steps.output.outcome == 'success'
-#        with:
-#          name: BE-UT-RESULT-${{ matrix.build_type }}
-#          path: ${{ matrix.build_type }}.txt
+      - name: save result
+        id: output
+        if: always()
+        run: |
+          set -x
+          mkdir output
+          echo "${{steps.matrix_step.outcome}}" > ${{ matrix.build_type }}.txt
+
+      - uses: actions/upload-artifact@v4
+        if: always() && steps.output.outcome == 'success'
+        with:
+          name: BE-UT-RESULT-${{ matrix.build_type }}
+          path: ${{ matrix.build_type }}.txt
 
   Teardown:
     runs-on: ubuntu-latest
@@ -70,13 +71,14 @@ jobs:
       - run: |
           echo teardown
 
-#      - name: Load outputs
-#        uses: actions/download-artifact@v4
-#        with:
-#          path: outputs
-#
-#      - run: |
-#          ls outputs
-#          ls outputs/BE-UT-RESULT-ASAN
-#          cat outputs/BE-UT-RESULT-ASAN/*.txt
-#          cat outputs/BE-UT-RESULT-Release/*.txt
+      - name: Load outputs
+        uses: actions/download-artifact@v4
+        with:
+          pattern: BE-UT-RESULT-*
+          path: outputs
+
+      - run: |
+          ls outputs
+          ls outputs/BE-UT-RESULT-ASAN
+          cat outputs/BE-UT-RESULT-ASAN/*.txt
+          cat outputs/BE-UT-RESULT-Release/*.txt
