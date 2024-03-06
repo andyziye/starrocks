@@ -111,6 +111,7 @@ jobs:
   Teardown:
     runs-on: ubuntu-latest
     name: Teardown
+    if: always()
     needs: [ a, b, c ]
     steps:
       - run: echo teardown
