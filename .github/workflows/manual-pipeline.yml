@@ -44,7 +44,10 @@ jobs:
         run: |
           echo ${build_type}
           if [[ "${build_type}" == "ASAN" ]]; then
+            echo "A=a" >> $GITHUB_OUTPUT
             exit 1
+          else
+            echo "B=c" >> $GITHUB_OUTPUT
           fi
 
 #      - name: save result
@@ -60,61 +63,17 @@ jobs:
 #          name: BE-UT-RESULT-${{ matrix.build_type }}
 #          path: ${{ matrix.build_type }}.txt
 
-  b:
-    runs-on: ubuntu-latest
-    timeout-minutes: 180
-    continue-on-error: true
-    name: B
-    env:
-      BRANCH: 'main'
-    strategy:
-      fail-fast: false
-      matrix:
-        build_type: [ Release, ASAN ]
-    steps:
-      - name: Matrix
-        id: matrix_step
-        shell: bash
-        env:
-          build_type: ${{ matrix.build_type }}
-        run: |
-          echo ${build_type}
-          if [[ "${build_type}" == "ASAN" ]]; then
-            exit 1
-          fi
-  c:
-    runs-on: ubuntu-latest
-    timeout-minutes: 180
-    continue-on-error: false
-    name: C
-    needs:
-      - a
-      - b
-    env:
-      BRANCH: 'main'
-    strategy:
-      fail-fast: false
-      matrix:
-        build_type: [ Release, ASAN ]
-    steps:
-      - name: Matrix
-        id: matrix_step
-        shell: bash
-        env:
-          build_type: ${{ matrix.build_type }}
-        run: |
-          echo ${build_type}
-          if [[ "${build_type}" == "ASAN" ]]; then
-            exit 1
-          fi
-
   Teardown:
     runs-on: ubuntu-latest
     name: Teardown
-    if: always()
-    needs: [ a, b, c ]
+    needs: [ a ]
     steps:
-      - run: echo teardown
+      - run: |
+          set -x
+          echo teardown
+          echo '${{ toJSON(needs.a.outputs) }}'
+
+
 #      - name: Load outputs
 #        uses: actions/download-artifact@v4
 #        with:
