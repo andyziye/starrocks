@@ -35,9 +35,6 @@ jobs:
       fail-fast: false
       matrix:
         build_type: [ Release, ASAN ]
-    outputs:
-      ASAN: ${{ steps.output.outputs.ASAN }}
-      Release: ${{ steps.output.outputs.Release }}
     steps:
       - name: Matrix
         id: matrix_step
