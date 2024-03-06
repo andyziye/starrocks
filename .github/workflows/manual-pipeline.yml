@@ -24,10 +24,10 @@ permissions:
 
 jobs:
 
-  be-ut:
+  a:
     runs-on: ubuntu-latest
     timeout-minutes: 180
-    name: BE UT
+    name: A
     env:
       BRANCH: 'main'
     strategy:
@@ -59,10 +59,56 @@ jobs:
 #          name: BE-UT-RESULT-${{ matrix.build_type }}
 #          path: ${{ matrix.build_type }}.txt
 
+  b:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    name: B
+    env:
+      BRANCH: 'main'
+    strategy:
+      fail-fast: false
+      matrix:
+        build_type: [ Release, ASAN ]
+    steps:
+      - name: Matrix
+        id: matrix_step
+        shell: bash
+        env:
+          build_type: ${{ matrix.build_type }}
+        run: |
+          echo ${build_type}
+          if [[ "${build_type}" == "ASAN" ]]; then
+            exit 1
+          fi
+  c:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    name: C
+    needs:
+      - a
+      - b
+    env:
+      BRANCH: 'main'
+    strategy:
+      fail-fast: false
+      matrix:
+        build_type: [ Release, ASAN ]
+    steps:
+      - name: Matrix
+        id: matrix_step
+        shell: bash
+        env:
+          build_type: ${{ matrix.build_type }}
+        run: |
+          echo ${build_type}
+          if [[ "${build_type}" == "ASAN" ]]; then
+            exit 1
+          fi
+
   Teardown:
     runs-on: ubuntu-latest
     name: Teardown
-    needs: [ be-ut ]
+    needs: [ a, b, c ]
     steps:
       - run: echo teardown
 #      - name: Load outputs
