@@ -49,6 +49,7 @@ jobs:
           if [[ "${build_type}" == "ASAN" ]]; then
             exit 1
           fi
+          echo "##### Package: ${build_type}" >> $GITHUB_STEP_SUMMARY
 
 #      - name: save result
 #        id: output
