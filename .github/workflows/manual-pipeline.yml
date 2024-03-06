@@ -35,8 +35,6 @@ jobs:
       fail-fast: false
       matrix:
         build_type: [ Release, ASAN ]
-    outputs:
-      my_output: ${{ steps.matrix_step.outputs.some_output }}
     steps:
       - name: Matrix
         id: matrix_step
@@ -45,11 +43,11 @@ jobs:
           build_type: ${{ matrix.build_type }}
         run: |
           echo ${build_type}
-          echo "::set-output name=some_output::${{ matrix.build_type }}"
+          echo "##### Package: ${build_type}" >> $GITHUB_STEP_SUMMARY
+
           if [[ "${build_type}" == "ASAN" ]]; then
             exit 1
           fi
-          echo "##### Package: ${build_type}" >> $GITHUB_STEP_SUMMARY
 
 #      - name: save result
 #        id: output
@@ -70,10 +68,7 @@ jobs:
     needs: [ a ]
     steps:
       - run: |
-          set -x
           echo teardown
-          echo '${{ toJSON(needs.a.outputs) }}'
-
 
 #      - name: Load outputs
 #        uses: actions/download-artifact@v4
