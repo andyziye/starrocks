@@ -70,6 +70,7 @@ jobs:
     steps:
       - run: |
           echo teardown
+          echo ${{ needs.a.result }}
 
       - name: Load outputs
         uses: actions/download-artifact@v4
