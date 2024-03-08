@@ -8,6 +8,7 @@ on:
         type: 'string'
         default: true
 
+
 jobs:
   a:
     runs-on: ubuntu-latest
@@ -25,3 +26,53 @@ jobs:
       - name: deploy
         run: |
           sleep 10
+
+  b:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.build_type }}
+    needs:
+      - a
+    steps:
+      - name: deploy
+        run: |
+          echo ${{ inputs.BUILD_TYPE }}
+          sleep 10
+
+      - name: deploy
+        run: |
+          sleep 10
+
+      - name: deploy
+        run: |
+          sleep 10
+          
+
+  c:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.build_type }}
+    needs:
+      - a
+    steps:
+      - name: deploy
+        run: |
+          echo ${{ inputs.BUILD_TYPE }}
+          sleep 10
+
+      - name: deploy
+        run: |
+          sleep 10
+
+      - name: deploy
+        run: |
+          sleep 10
+
+  d:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.build_type }}
+    needs:
+      - b
+      - c
+    steps:
+      - name: deploy
+        run: |
+          echo ${{ inputs.BUILD_TYPE }}
