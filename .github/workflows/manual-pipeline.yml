@@ -75,7 +75,7 @@ jobs:
     strategy:
       matrix:
         target: [ Release, ASAN ]
-    uses: ./.github/workflows/reusable-pipeline.yml@main
+    uses: ./.github/workflows/reusable-pipeline.yml
     with:
       BUILD_TYPE: ${{ matrix.target }}
 #  c:
