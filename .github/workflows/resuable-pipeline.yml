@@ -1,0 +1,27 @@
+name: DEPLOY AND SYSTEM TEST PIPELINE
+
+on:
+  workflow_call:
+    inputs:
+      BUILD_TYPE:
+        description: 'BUILD TYPE'
+        type: 'string'
+        default: true
+
+jobs:
+  a:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: deploy
+        run: |
+          echo ${{ inputs.BUILD_TYPE }}
+          sleep 10
+
+      - name: deploy
+        run: |
+          sleep 10
+
+      - name: deploy
+        run: |
+          sleep 10
