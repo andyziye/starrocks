@@ -77,7 +77,7 @@ jobs:
         target: [ Release, ASAN ]
     uses: .github/workflows/reusable-pipeline.yml
     with:
-      BUILD_TYPE:: ${{ matrix.target }}
+      BUILD_TYPE: ${{ matrix.target }}
 #  c:
 #    uses: octocat/octo-repo/.github/workflows/deployment.yml@main
 #      with:
