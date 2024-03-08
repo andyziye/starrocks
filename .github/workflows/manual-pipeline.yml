@@ -81,6 +81,17 @@ jobs:
         run: |
           sleep 10
 
+      - name: deploy
+        run: |
+          sleep 10
+
+      - name: deploy
+        run: |
+          sleep 10
+
+      - name: deploy
+        run: |
+          sleep 10
 #  c:
 #    uses: octocat/octo-repo/.github/workflows/deployment.yml@main
 #      with:
