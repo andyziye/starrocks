@@ -72,6 +72,8 @@ jobs:
           echo b
 
   c:
+    needs:
+      - b
     strategy:
       matrix:
         target: [ Release, ASAN ]
