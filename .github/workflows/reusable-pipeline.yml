@@ -12,7 +12,6 @@ on:
 jobs:
   a:
     runs-on: ubuntu-latest
-    environment: ${{ inputs.build_type }}
     steps:
       - name: deploy
         run: |
@@ -29,7 +28,6 @@ jobs:
 
   b:
     runs-on: ubuntu-latest
-    environment: ${{ inputs.build_type }}
     needs:
       - a
     steps:
@@ -49,7 +47,6 @@ jobs:
 
   c:
     runs-on: ubuntu-latest
-    environment: ${{ inputs.build_type }}
     needs:
       - a
     steps:
@@ -68,7 +65,6 @@ jobs:
 
   d:
     runs-on: ubuntu-latest
-    environment: ${{ inputs.build_type }}
     needs:
       - b
       - c
