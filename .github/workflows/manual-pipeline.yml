@@ -30,10 +30,10 @@ jobs:
         id: a
         if: inputs.IS_REBUILD == true
         run: |
-          exit 1
+          exit 0
 
       - name: b
-        if: steps.a.outcome != 'success'
+        if: inputs.IS_REBUILD == false
         run: |
           echo b
 
