@@ -25,21 +25,33 @@ permissions:
 jobs:
   a:
     runs-on: ubuntu-latest
+    outputs:
+      name: ${{ steps.a.outputs.name }}
     steps:
       - name: a
         id: a
-        if: inputs.IS_REBUILD
         run: |
-          exit 0
-
+          echo "name=HAHA" >> $GITHUB_OUTPUT
+  b:
+    runs-on: ubuntu-latest
+    outputs:
+      name2: ${{ steps.b.outputs.name2 }}
+    steps:
       - name: b
-        if: inputs.IS_REBUILD == false
+        id: b
         run: |
-          echo b
+          echo "name2=xx" >> $GITHUB_OUTPUT
 
-      - name: c
-        run: |
-          echo c
+  c:
+    needs:
+      - b
+    runs-on:
+      - ubuntu-latest
+    steps:
+      - run: |
+          echo ${{needs.b.outputs.name2}}
+          echo ${{needs.b.outputs.name}}
+
 #  a:
 #    runs-on: ubuntu-latest
 #    timeout-minutes: 180
