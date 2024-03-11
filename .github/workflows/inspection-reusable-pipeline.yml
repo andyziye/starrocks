@@ -30,8 +30,12 @@ on:
         default: false
 
     outputs:
-      CONF_FILE: ${{ jobs.deploy.outputs.deploy_conf_file }}
-      MYSQL_ECI_ID: ${{ jobs.SQL-Tester.outputs.MYSQL_ECI_ID }}
+      CONF_FILE:
+        description: "DEPLOY CONF"
+        value: ${{ jobs.deploy.outputs.deploy_conf_file }}
+      MYSQL_ECI_ID:
+        description: "MySQL ECI ID"
+        value: ${{ jobs.SQL-Tester.outputs.MYSQL_ECI_ID }}
 
 permissions:
   checks: write
