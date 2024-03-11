@@ -28,7 +28,7 @@ jobs:
     steps:
       - name: a
         id: a
-        if: inputs.IS_REBUILD == 'true'
+        if: inputs.IS_REBUILD == true
         run: |
           exit 1
 
