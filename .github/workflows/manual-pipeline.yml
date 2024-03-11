@@ -35,6 +35,10 @@ jobs:
         if: inputs.IS_REBUILD != 'true'
         run: |
           echo b
+
+      - name: c
+        run: |
+          echo c
 #  a:
 #    runs-on: ubuntu-latest
 #    timeout-minutes: 180
