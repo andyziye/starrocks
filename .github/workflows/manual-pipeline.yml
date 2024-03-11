@@ -27,12 +27,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: a
+        id: a
         if: inputs.IS_REBUILD == 'true'
         run: |
-          echo a
+          exit 1
 
       - name: b
-        if: inputs.IS_REBUILD != 'true'
+        if: steps.a.outcome != "success"
         run: |
           echo b
 
