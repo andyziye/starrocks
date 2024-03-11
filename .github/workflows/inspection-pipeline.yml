@@ -326,7 +326,7 @@ jobs:
           fi
 
   system-test-release:
-    name: DEPLOY CLUSTER && SYSTEM TEST (Release)
+    name: Release
     uses: ./.github/workflows/inspection-reusable-pipeline.yml
     needs:
       - info
@@ -341,7 +341,7 @@ jobs:
       IS_SELF_BUILD: ${{ needs.test_filter.outputs.IS_SELF_BUILD }}
 
   system-test-asan:
-    name: DEPLOY CLUSTER && SYSTEM TEST (ASAN)
+    name: ASAN
     uses: ./.github/workflows/inspection-reusable-pipeline.yml
     needs:
       - info

@@ -195,6 +195,9 @@ jobs:
       FE_NODE: ${{ needs.deploy.outputs.fe }}
       BE_NODE: ${{ needs.deploy.outputs.be }}
       BE_LIST: ${{ needs.deploy.outputs.be_list }}
+    outputs:
+      FE_NODE: ${{ needs.deploy.outputs.fe }}
+      BE_NODE: ${{ needs.deploy.outputs.be }}
     steps:
       - name: CLEAN
         run: |
@@ -214,14 +217,13 @@ jobs:
     runs-on: [ self-hosted, normal ]
     name: ADMIT TEST
     needs:
-      - deploy
       - restart-fe
       - restart-be
-    if: always()
+    if: always() && needs.restart-be.result == 'success' && needs.restart-fe.result == 'success'
     timeout-minutes: 40
     env:
-      FE_NODE: ${{ needs.deploy.outputs.fe }}
-      BE_NODE: ${{ needs.deploy.outputs.be }}
+      FE_NODE: ${{ needs.restart-be.outputs.FE_NODE }}
+      BE_NODE: ${{ needs.restart-be.outputs.BE_NODE }}
     steps:
       - name: CLEAN
         run: |
