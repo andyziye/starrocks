@@ -33,7 +33,7 @@ jobs:
           exit 1
 
       - name: b
-        if: steps.a.outcome != "success"
+        if: steps.a.outcome != 'success'
         run: |
           echo b
 
