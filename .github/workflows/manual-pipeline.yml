@@ -23,75 +23,86 @@ permissions:
   statuses: write
 
 jobs:
-
   a:
     runs-on: ubuntu-latest
-    timeout-minutes: 180
-    continue-on-error: true
-    name: A
-    env:
-      BRANCH: 'main'
-    strategy:
-      fail-fast: false
-      matrix:
-        build_type: [ Release, ASAN ]
     steps:
-      - name: Matrix
-        id: matrix_step
-        shell: bash
-        env:
-          build_type: ${{ matrix.build_type }}
+      - name: a
+        if: inputs.IS_REBUILD == 'true'
         run: |
-          echo ${build_type}
-          echo "##### Package: ${build_type}" >> $GITHUB_STEP_SUMMARY
+          echo a
 
-          if [[ "${build_type}" == "ASAN" ]]; then
-            exit 1
-          fi
-
-      - name: save result
-        id: output
-        if: always()
+      - name: b
+        if: inputs.IS_REBUILD != 'true'
         run: |
-          set -x
-          mkdir output
-          echo "${{steps.matrix_step.outcome}}" > ./output/${{ matrix.build_type }}.txt
-
-      - uses: actions/upload-artifact@v4
-        if: always() && steps.output.outcome == 'success'
-        with:
-          name: BE-UT-RESULT-${{ matrix.build_type }}
-          path: ./output/${{ matrix.build_type }}.txt
-
-  b:
-    runs-on: ubuntu-latest
-    name: Teardown
-    needs: [ a ]
-    steps:
-      - run: |
           echo b
-
-  c:
-    needs:
-      - b
-    uses: ./.github/workflows/reusable-pipeline.yml
-    with:
-      BUILD_TYPE: ASAN
-
-  d:
-    needs:
-      - b
-    uses: ./.github/workflows/reusable-pipeline.yml
-    with:
-      BUILD_TYPE: Release
-
-  e:
-    runs-on: ubuntu-latest
-    needs:
-      - c
-      - d
-    steps:
-      - run: echo yes
+#  a:
+#    runs-on: ubuntu-latest
+#    timeout-minutes: 180
+#    continue-on-error: true
+#    name: A
+#    env:
+#      BRANCH: 'main'
+#    strategy:
+#      fail-fast: false
+#      matrix:
+#        build_type: [ Release, ASAN ]
+#    steps:
+#      - name: Matrix
+#        id: matrix_step
+#        shell: bash
+#        env:
+#          build_type: ${{ matrix.build_type }}
+#        run: |
+#          echo ${build_type}
+#          echo "##### Package: ${build_type}" >> $GITHUB_STEP_SUMMARY
+#
+#          if [[ "${build_type}" == "ASAN" ]]; then
+#            exit 1
+#          fi
+#
+#      - name: save result
+#        id: output
+#        if: always()
+#        run: |
+#          set -x
+#          mkdir output
+#          echo "${{steps.matrix_step.outcome}}" > ./output/${{ matrix.build_type }}.txt
+#
+#      - uses: actions/upload-artifact@v4
+#        if: always() && steps.output.outcome == 'success'
+#        with:
+#          name: BE-UT-RESULT-${{ matrix.build_type }}
+#          path: ./output/${{ matrix.build_type }}.txt
+#
+#  b:
+#    runs-on: ubuntu-latest
+#    name: Teardown
+#    needs: [ a ]
+#    steps:
+#      - run: |
+#          echo b
+#
+#  c:
+#    needs:
+#      - b
+#    uses: ./.github/workflows/reusable-pipeline.yml
+#    with:
+#      BUILD_TYPE: ASAN
+#
+#  d:
+#    needs:
+#      - b
+#    uses: ./.github/workflows/reusable-pipeline.yml
+#    with:
+#      BUILD_TYPE: Release
+#
+#  e:
+#    runs-on: ubuntu-latest
+#    needs:
+#      - c
+#      - d
+#    steps:
+#      - run: echo yes
 
 #  c:
 #    uses: octocat/octo-repo/.github/workflows/deployment.yml@main
