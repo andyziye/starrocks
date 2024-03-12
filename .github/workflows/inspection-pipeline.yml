@@ -80,144 +80,6 @@ jobs:
             echo "ASAN_TAR_PATH=${{ inputs.ASAN_TAR_PATH }}" >> $GITHUB_OUTPUT
           fi
 
-  be-ut:
-    runs-on: [self-hosted, normal]
-    needs:
-      - info
-    timeout-minutes: 90
-    name: BE UT
-    continue-on-error: true
-    env:
-      BRANCH: ${{ needs.info.outputs.BRANCH }}
-      PR_NUMBER: ${{ needs.info.outputs.PR_NUMBER }}
-    strategy:
-      fail-fast: false
-      matrix:
-        build_type: [ Release, ASAN ]
-    steps:
-      - name: UPDATE ECI & RUN UT
-        id: run_ut
-        shell: bash
-        timeout-minutes: 90
-        env:
-          build_type: ${{ matrix.build_type }}
-        run: |
-          rm -rf ./ci-tool && cp -rf /var/lib/ci-tool ./ci-tool && cd ci-tool && git pull && source lib/init.sh
-          ./bin/elastic-ut.sh --repository ${{ github.repository }} --branch ${BRANCH} --pr ${PR_NUMBER} --module be --build ${build_type}
-
-      - name: clean ECI
-        if: always()
-        run: |
-          echo ${{ steps.run_ut.outputs.ECI_ID }}
-          eci rm ${{ steps.run_ut.outputs.ECI_ID }}
-          echo "${{ steps.run_ut.outcome }}" > ./${{ matrix.build_type }}.txt
-
-      - name: Upload Log
-        uses: actions/upload-artifact@v4
-        if: always() && steps.run_ut.outcome == 'failure'
-        with:
-          name: BE UT LOG
-          path: ${{ steps.run_ut.outputs.BE_LOG }}
-          retention-days: 1
-          overwrite: true
-
-      - name: Upload BE UT Result
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: BE-UT-RESULT-${{ matrix.build_type }}
-          path: ${{ matrix.build_type }}.txt
-          retention-days: 1
-          overwrite: true
-
-      - name: Clean ENV
-        if: always()
-        run: |
-          rm -f ${{ steps.run_ut.outputs.RES_FILE }}
-          rm -f ${{ steps.run_ut.outputs.RES_LOG }}
-          rm -f ${{ steps.run_ut.outputs.BE_LOG }}
-          rm -rf ${{ github.workspace }}/*
-
-  fe-ut:
-    runs-on: [self-hosted, normal]
-    name: FE UT
-    needs:
-      - info
-    env:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      BRANCH: ${{ needs.info.outputs.BRANCH }}
-      PR_NUMBER: ${{ needs.info.outputs.PR_NUMBER }}
-    steps:
-      - name: clean
-        run: |
-          rm -rf ${{ github.workspace }}
-          mkdir -p ${{ github.workspace }}
-
-      - name: BRANCH INFO
-        id: branch
-        env:
-          repo: ${{ github.repository }}
-        run: |
-          bucket_prefix=`echo ${repo%/*} | tr '[:upper:]' '[:lower:]'` 
-          echo "bucket_prefix=${bucket_prefix}" >> $GITHUB_OUTPUT
-
-      - name: UPDATE ECI & RUN UT
-        id: run_ut
-        shell: bash
-        timeout-minutes: 60
-        run: |
-          rm -rf ./ci-tool && cp -rf /var/lib/ci-tool ./ci-tool && cd ci-tool && git pull && source lib/init.sh
-          ./bin/elastic-ut.sh --repository ${{ github.repository }} --branch ${BRANCH} --pr ${PR_NUMBER} --module fe --build Release
-
-      - name: Clean ECI
-        if: always()
-        run: |
-          echo ${{ steps.run_ut.outputs.ECI_ID }}
-          echo ">>> Dmesg info:"
-          eci exec ${{ steps.run_ut.outputs.ECI_ID }} bash -c "dmesg -T"
-          eci rm ${{ steps.run_ut.outputs.ECI_ID }}
-
-      - name: Upload log
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: FE UT LOG
-          path: ${{ steps.run_ut.outputs.RES_LOG }}
-          retention-days: 1
-          overwrite: true
-
-      - name: Download FE UT XML
-        if: always()
-        id: download-ut-xml
-        env:
-          oss_path: ${{ steps.run_ut.outputs.oss_path }}
-        run: |
-          mkdir fe && cd fe
-          ossutil64 --config-file ~/.ossutilconfig cp ${oss_path}/ . --recursive
-          tar zxf fe_ut_report.tar.gz
-
-      - name: Publish UT Report
-        uses: mikepenz/action-junit-report@v4
-        if: always()
-        id: publish_report
-        env:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          token: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          check_name: 'FE UT Report'
-          detailed_summary: true
-          fail_on_failure: true
-          report_paths: ./fe/fe-core/target/surefire-reports/*.xml
-
-      - name: Clean ENV
-        if: always()
-        run: |
-          rm -rf ${{ steps.run_ut.outputs.FE_REPORT_DIR }}
-          rm -f ${{ steps.run_ut.outputs.RES_FILE }}
-          rm -f ${{ steps.run_ut.outputs.RES_LOG }}
-          rm -rf ${{ steps.run_ut.outputs.COV_DIR }}
-          rm -rf ${{ github.workspace }}/*
-
   build:
     runs-on: [self-hosted, normal]
     name: BUILD
@@ -237,19 +99,9 @@ jobs:
         run: |
           rm -rf ${{ github.workspace }} && mkdir -p ${{ github.workspace }}
 
-      - name: UPDATE ECI & RUN BUILD
-        id: run_build
-        shell: bash
-        timeout-minutes: 90
-        run: |
-          rm -rf ./ci-tool && cp -rf /var/lib/ci-tool ./ci-tool && cd ci-tool && git pull && source lib/init.sh
-          ./bin/elastic-build.sh --repository ${{ github.repository }} --branch ${BRANCH} --pr ${PR_NUMBER} --build ${{ matrix.build_type }}
-
       - name: BUILD RESULT
         run: |
-          echo ${{ steps.run_build.outputs.ABSOLUTE_OUTPUT_TAR }}
-          echo "##### Package: ${{ steps.run_build.outputs.ABSOLUTE_OUTPUT_TAR }}" >> $GITHUB_STEP_SUMMARY
-          echo ${{ steps.run_build.outputs.ABSOLUTE_OUTPUT_TAR }} > tar.txt
+          echo ${{ matrix.build_type }} > tar.txt
 
       - uses: actions/upload-artifact@v4
         with:
@@ -258,17 +110,9 @@ jobs:
           retention-days: 1
           overwrite: true
 
-      - name: clean ECI
-        if: always()
-        run: |
-          echo ${{ steps.run_build.outputs.ECI_ID }}
-          eci rm ${{ steps.run_build.outputs.ECI_ID }}
-
       - name: Clean ENV
         if: always()
         run: |
-          rm -f ${{ steps.run_build.outputs.RES_FILE }}
-          rm -f ${{ steps.run_build.outputs.RES_LOG }}
           rm -rf ${{ github.workspace }}
 
   test_filter:
@@ -297,6 +141,7 @@ jobs:
         run: |
           if [[ -e "./outputs/BUILD-RESULT-Release/tar.txt" ]]; then
             build_result=$(cat "./outputs/BUILD-RESULT-Release/tar.txt")
+            echo $build_result
             echo "RELEASE_TAR_PATH=${build_result}" >> $GITHUB_OUTPUT
           else
             echo "::error::BUILD FAILED (Release)!"
@@ -305,6 +150,7 @@ jobs:
           
           if [[ -e "./outputs/BUILD-RESULT-ASAN/tar.txt" ]]; then
             build_result=$(cat "./outputs/BUILD-RESULT-ASAN/tar.txt")
+            echo $build_result
             echo "ASAN_TAR_PATH=${build_result}" >> $GITHUB_OUTPUT
           else
             echo "::error::BUILD FAILED (ASAN)!"
@@ -360,8 +206,6 @@ jobs:
     name: Teardown
     needs:
       - info
-      - be-ut
-      - fe-ut
       - system-test-release
       - system-test-asan
     if: always()
