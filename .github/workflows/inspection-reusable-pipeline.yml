@@ -26,7 +26,7 @@ on:
         default: ci-admit
       IS_SELF_BUILD:
         description: 'IS SELF BUILD'
-        type: 'string'
+        type: string
         default: 'false'
 
     outputs:
